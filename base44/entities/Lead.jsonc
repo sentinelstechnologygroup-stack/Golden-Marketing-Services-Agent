@@ -159,6 +159,65 @@
     "closed_outcome": {
       "type": "string"
     },
+    "verification_status": {
+      "type": "string",
+      "enum": ["pending", "sent", "verified", "failed", "not_required"],
+      "default": "pending"
+    },
+    "verification_method": {
+      "type": "string",
+      "enum": ["sms", "voice", "manual", "none"],
+      "default": "sms"
+    },
+    "verified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "lifecycle_stage": {
+      "type": "string",
+      "enum": [
+        "inquiry",
+        "verified_prospect",
+        "qualified_lead",
+        "contacted_lead",
+        "qualified_handoff",
+        "warm_transfer_appointment",
+        "accepted_handoff",
+        "client_outcome"
+      ],
+      "default": "inquiry"
+    },
+    "handoff_status": {
+      "type": "string",
+      "enum": ["not_ready", "ready", "offered", "transferring", "appointment_set", "accepted", "declined", "timeout", "completed"],
+      "default": "not_ready"
+    },
+    "handoff_accepted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "handoff_evidence": {
+      "type": "object",
+      "description": "Evidence-backed handoff receipt data including verification, qualification, consent, transfer, and acceptance checkpoints"
+    },
+    "intent_score": {
+      "type": "number",
+      "default": 0
+    },
+    "intent_conflict": {
+      "type": "boolean",
+      "default": false
+    },
+    "declared_intent": {
+      "type": "object"
+    },
+    "observed_intent": {
+      "type": "object"
+    },
+    "last_behavior_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "consent_recorded": {
       "type": "boolean",
       "default": false
