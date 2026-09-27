@@ -113,7 +113,7 @@ export default function Leads() {
                         {verificationLabel(lead)}
                       </Badge>
                       <Badge className={`${STATUS_COLORS[lead.lead_status] || 'bg-slate-100 text-slate-700'} border-0`}>{(lead.lead_status || 'new').replace(/_/g, ' ')}</Badge>
-                    </div>}
+                    </div>
                   </CardContent>
                 </Card>
               </Link>
