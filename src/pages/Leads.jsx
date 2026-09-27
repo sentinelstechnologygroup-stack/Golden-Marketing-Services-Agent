@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Search, Plus, Clock } from 'lucide-react';
 import LeadFormDialog from '@/components/leads/LeadFormDialog';
 import { AuthError, ErrorState, EmptyState, BrandChip, TenantBadge } from '@/components/ContractState';
+import { deriveLifecycleStage, lifecycleLabel, verificationLabel } from '@/lib/leadLifecycle';
 
 const STATUS_COLORS = {
   new: 'bg-blue-100 text-blue-700', contact_attempted: 'bg-amber-100 text-amber-700',
@@ -59,8 +60,8 @@ export default function Leads() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-heading font-semibold tracking-tight">Lead Inbox</h1>
-          <p className="text-muted-foreground text-sm mt-1">Sorted by priority then freshness</p>
+          <h1 className="text-2xl font-heading font-semibold tracking-tight">Qualification Gate Inbox</h1>
+          <p className="text-muted-foreground text-sm mt-1">Inquiry → verification → qualification → contact → handoff → outcome</p>
         </div>
         <Button onClick={() => setShowCreate(true)}><Plus className="h-4 w-4 mr-2" /> New Lead</Button>
       </div>
@@ -88,6 +89,7 @@ export default function Leads() {
         items.length === 0 ? <Card><CardContent className="py-16"><EmptyState message="No leads match your filters." /></CardContent></Card> :
         <div className="space-y-2">
           {items.map(lead => {
+            const lifecycle = deriveLifecycleStage(lead);
             const age = Math.round((Date.now() - new Date(lead.created_date).getTime()) / 60000);
             const ageLabel = age < 60 ? `${age}m` : age < 1440 ? `${Math.floor(age / 60)}h` : `${Math.floor(age / 1440)}d`;
             return (
@@ -105,8 +107,13 @@ export default function Leads() {
                         <span className="text-xs text-muted-foreground truncate">{lead.phone || lead.email || '—'}</span>
                       </div>
                     </div>
-                    <Badge className={`${STATUS_COLORS[lead.lead_status] || 'bg-slate-100 text-slate-700'} border-0`}>{lead.lead_status.replace(/_/g, ' ')}</Badge>
-                    {lead.qualification_status === 'qualified' && <Badge className="bg-emerald-100 text-emerald-700 border-0">Qualified</Badge>}
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                      <Badge className="bg-slate-900 text-white border-0">{lifecycleLabel(lifecycle)}</Badge>
+                      <Badge className={lead.verification_status === 'verified' ? 'bg-emerald-100 text-emerald-700 border-0' : 'bg-amber-100 text-amber-700 border-0'}>
+                        {verificationLabel(lead)}
+                      </Badge>
+                      <Badge className={`${STATUS_COLORS[lead.lead_status] || 'bg-slate-100 text-slate-700'} border-0`}>{(lead.lead_status || 'new').replace(/_/g, ' ')}</Badge>
+                    </div>}
                   </CardContent>
                 </Card>
               </Link>
