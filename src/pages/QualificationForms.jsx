@@ -41,9 +41,15 @@ export default function QualificationForms() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-heading font-semibold tracking-tight">Qualification Forms</h1><p className="text-muted-foreground text-sm mt-1">Reusable question builders with scoring and thresholds</p></div>
+        <div><h1 className="text-2xl font-heading font-semibold tracking-tight">Qualification Forms</h1><p className="text-muted-foreground text-sm mt-1">Reusable question builders for the Qualified Lead gate, with scoring and thresholds</p></div>
         {canManage && <Button onClick={() => { setEditing(null); setShowDialog(true); }}><Plus className="h-4 w-4 mr-2" /> New Form</Button>}
       </div>
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="p-4 text-sm">
+          <p className="font-medium">Qualification is one gate, not the entire handoff.</p>
+          <p className="mt-1 text-muted-foreground">A prospect must also complete the configured identity/mobile verification requirement and have documented contact before the CRM can treat the record as a Qualified Handoff.</p>
+        </CardContent>
+      </Card>
       {loading ? <Spinner/> : (
         <div className="space-y-3">
                   {forms.length === 0 && (
