@@ -160,6 +160,28 @@ export default function LeadDetail() {
     }
   };
 
+  const handleManualVerification = async () => {
+    try {
+      const now = new Date().toISOString();
+      let lifecycleStage = 'verified_prospect';
+      if (lead.qualification_status === 'qualified' && lead.last_contact_date) lifecycleStage = 'qualified_handoff';
+      else if (lead.last_contact_date) lifecycleStage = 'contacted_lead';
+      else if (lead.qualification_status === 'qualified') lifecycleStage = 'qualified_lead';
+
+      await base44.entities.Lead.update(lead.id, {
+        verification_status: 'verified',
+        verification_method: 'manual',
+        verified_at: now,
+        lifecycle_stage: lifecycleStage,
+        handoff_status: lifecycleStage === 'qualified_handoff' ? 'ready' : (lead.handoff_status || 'not_ready'),
+      });
+      toast({ title: 'Prospect verified', description: 'Manual pilot verification recorded with timestamp.' });
+      loadAll();
+    } catch (e) {
+      toast({ title: 'Verification update failed', description: e.message, variant: 'destructive' });
+    }
+  };
+
   const handleSaveAppointment = async () => {
     if (!apptDate) { toast({ title: 'Pick a date', variant: 'destructive' }); return; }
     setSavingAppt(true);
@@ -245,9 +267,16 @@ export default function LeadDetail() {
               <Activity className="h-4 w-4" /> Declared intent and observed behavior conflict. Reconfirm timing and motivation before handoff.
             </div>
           )}
-          <p className="mt-3 text-xs text-muted-foreground">
-            A qualified lead does not become a qualified handoff until verification and qualification requirements are satisfied and contact is documented.
-          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            {lead.verification_status !== 'verified' && (
+              <Button type="button" size="sm" variant="outline" onClick={handleManualVerification}>
+                <ShieldCheck className="h-4 w-4 mr-2" /> Verify Manually (Pilot)
+              </Button>
+            )}
+            <p className="text-xs text-muted-foreground">
+              A qualified lead does not become a qualified handoff until verification and qualification requirements are satisfied and contact is documented. Automated SMS OTP remains provider-dependent; manual verification supports the pilot without representing an SMS check.
+            </p>
+          </div>
         </CardContent>
       </Card>
 
