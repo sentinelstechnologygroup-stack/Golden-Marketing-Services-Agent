@@ -9,7 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { ArrowLeft, Phone, Calendar, FileText, ClipboardList, AlertTriangle } from 'lucide-react';
+import { deriveLifecycleStage, lifecycleLabel, verificationLabel } from '@/lib/leadLifecycle';
+import { ArrowLeft, Phone, Calendar, FileText, ClipboardList, AlertTriangle, ShieldCheck, CheckCircle2, Activity } from 'lucide-react';
 
 const DISPOSITIONS = ['attempted', 'no_answer', 'voicemail_left', 'connected', 'qualified', 'unqualified', 'duplicate', 'wrong_number', 'do_not_call', 'warm_transfer_completed', 'appointment_booked', 'appointment_completed', 'contact_accepted', 'contact_declined', 'contact_unavailable', 'follow_up_required', 'closed', 'lost'];
 
@@ -135,6 +136,11 @@ export default function LeadDetail() {
         next_action: nextAction,
         provider_mode: 'mock',
       });
+      const qualificationStatus = computeQualStatus(qualForm, qualAnswers);
+      const lifecycleStage =
+        qualificationStatus === 'qualified' && lead.verification_status === 'verified'
+          ? 'qualified_handoff'
+          : 'contacted_lead';
       await firebaseClient.entities.Lead.update(lead.id, {
         disposition,
         lead_status: mapDispositionToStatus(disposition),
@@ -146,7 +152,9 @@ export default function LeadDetail() {
         latestNote: callNotes || lead.latestNote || null,
         next_action: nextAction || null,
         qualification_data: qualAnswers,
-        qualification_status: computeQualStatus(qualForm, qualAnswers),
+        qualification_status: qualificationStatus,
+        lifecycle_stage: lifecycleStage,
+        handoff_status: lifecycleStage === 'qualified_handoff' ? 'ready' : (lead.handoff_status || 'not_ready'),
       });
       toast({ title: 'Call record saved', description: `Disposition: ${disposition.replace(/_/g, ' ')}` });
       setCallNotes('');
@@ -179,6 +187,12 @@ export default function LeadDetail() {
         timezone: 'America/Chicago',
         calendar_provider: 'manual',
         status: 'booked',
+      });
+      await firebaseClient.entities.Lead.update(lead.id, {
+        appointment_status: 'booked',
+        lead_status: 'appointment_scheduled',
+        lifecycle_stage: 'warm_transfer_appointment',
+        handoff_status: 'appointment_set',
       });
       toast({ title: 'Appointment booked' });
       setApptDate('');
@@ -221,6 +235,32 @@ export default function LeadDetail() {
           {brand?.default_greeting && (
             <p className="text-sm mt-2 p-2 rounded bg-muted"><span className="font-medium">Required greeting: </span>{brand.default_greeting}</p>
           )}
+        </CardContent>
+      </Card>
+
+      <Card className="border-primary/30">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> LMS Qualification Gate</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-sm">
+            <GateItem label="Lifecycle stage" value={lifecycleLabel(deriveLifecycleStage(lead))} strong />
+            <GateItem label="Identity / mobile" value={verificationLabel(lead)} good={lead.verification_status === 'verified'} />
+            <GateItem label="Qualification" value={lead.qualification_status?.replace(/_/g, ' ') || 'pending'} good={lead.qualification_status === 'qualified'} />
+            <GateItem label="Qualification score" value={Number.isFinite(lead.qualification_score) ? lead.qualification_score : '—'} />
+            <GateItem label="Contact attempts" value={lead.contact_attempts ?? 0} />
+            <GateItem label="Handoff status" value={(lead.handoff_status || 'not ready').replace(/_/g, ' ')} good={['ready','accepted','completed'].includes(lead.handoff_status)} />
+            <GateItem label="Client acceptance" value={(lead.owner_acceptance_status || 'not required').replace(/_/g, ' ')} good={lead.owner_acceptance_status === 'accepted'} />
+            <GateItem label="Intent score" value={Number.isFinite(lead.intent_score) ? lead.intent_score : '—'} alert={lead.intent_conflict === true} />
+          </div>
+          {lead.intent_conflict && (
+            <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 flex items-center gap-2">
+              <Activity className="h-4 w-4" /> Declared intent and observed behavior conflict. Reconfirm timing and motivation before handoff.
+            </div>
+          )}
+          <p className="mt-3 text-xs text-muted-foreground">
+            A qualified lead does not become a qualified handoff until verification and qualification requirements are satisfied and contact is documented.
+          </p>
         </CardContent>
       </Card>
 
@@ -334,6 +374,18 @@ export default function LeadDetail() {
               appointments.map(a => <div key={a.id} className="border border-border rounded p-2"><div className="flex justify-between"><span className="font-medium">{a.appointment_type.replace(/_/g, ' ')}</span><Badge variant="outline">{a.status}</Badge></div><span className="text-xs text-muted-foreground">{new Date(a.scheduled_start).toLocaleString()}</span></div>)}
           </CardContent>
         </Card>
+      </div>
+    </div>
+  );
+}
+
+function GateItem({ label, value, good = false, alert = false, strong = false }) {
+  return (
+    <div className="rounded-lg border border-border bg-muted/30 p-3">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className={`mt-1 flex items-center gap-1.5 font-medium capitalize ${good ? 'text-emerald-700' : alert ? 'text-amber-700' : strong ? 'text-primary' : ''}`}>
+        {good && <CheckCircle2 className="h-3.5 w-3.5" />}
+        {String(value ?? '—')}
       </div>
     </div>
   );
