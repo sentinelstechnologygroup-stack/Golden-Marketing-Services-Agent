@@ -36,8 +36,8 @@ export default function LeadFormDialog({ open, onClose, brands, campaigns, onSav
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.first_name || !form.brand_id || !form.campaign_id) {
-      toast({ title: 'Missing fields', description: 'Name, brand, and campaign are required.', variant: 'destructive' });
+    if (!form.first_name || !form.phone || !form.brand_id || !form.campaign_id) {
+      toast({ title: 'Missing fields', description: 'Name, mobile phone, brand, and campaign are required.', variant: 'destructive' });
       return;
     }
     setSaving(true);
@@ -46,8 +46,17 @@ export default function LeadFormDialog({ open, onClose, brands, campaigns, onSav
       const payload = {
         ...form,
         organization_id: brand?.organization_id || user?.organization_id,
-        consent_recorded: true,
-        consent_language_version: brand?.consent_language_version || '1.0',
+        consent_recorded: lead?.consent_recorded || false,
+        consent_language_version: lead?.consent_language_version || brand?.consent_language_version || '1.0',
+        ...(isEdit ? {} : {
+          verification_status: 'pending',
+          verification_method: 'sms',
+          lifecycle_stage: 'inquiry',
+          qualification_status: 'pending',
+          handoff_status: 'not_ready',
+          intent_score: 0,
+          intent_conflict: false,
+        }),
       };
       if (isEdit) {
         await firebaseClient.entities.Lead.update(lead.id, payload);
@@ -84,8 +93,8 @@ export default function LeadFormDialog({ open, onClose, brands, campaigns, onSav
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Phone</Label>
-              <Input value={form.phone} onChange={e => update('phone', e.target.value)} />
+              <Label>Mobile phone *</Label>
+              <Input type="tel" required value={form.phone} onChange={e => update('phone', e.target.value)} />
             </div>
             <div>
               <Label>Email</Label>
@@ -112,6 +121,7 @@ export default function LeadFormDialog({ open, onClose, brands, campaigns, onSav
               </select>
             </div>
           </div>
+          {!isEdit && <p className="text-xs text-muted-foreground rounded-md bg-muted px-3 py-2">New records enter the LMS Qualification Gate as <strong>Inquiry</strong> with mobile verification pending. Verification, qualification, handoff, and acceptance must be recorded before the opportunity advances.</p>}
           <div>
             <Label>Priority (1 highest)</Label>
             <Input type="number" min={1} max={10} value={form.priority} onChange={e => update('priority', Number(e.target.value))} />
