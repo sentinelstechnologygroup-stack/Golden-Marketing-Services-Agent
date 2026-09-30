@@ -175,7 +175,7 @@ export default function LeadDetail() {
       else if (lead.last_contact_date) lifecycleStage = 'contacted_lead';
       else if (lead.qualification_status === 'qualified') lifecycleStage = 'qualified_lead';
 
-      await base44.entities.Lead.update(lead.id, {
+      await firebaseClient.entities.Lead.update(lead.id, {
         verification_status: 'verified',
         verification_method: 'manual',
         verified_at: now,
