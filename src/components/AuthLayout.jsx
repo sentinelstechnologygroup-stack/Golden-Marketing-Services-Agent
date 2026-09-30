@@ -4,9 +4,9 @@ import BrandMark from "@/components/BrandMark";
 
 export default function AuthLayout({ icon: Icon, title, subtitle, footer, children }) {
   return (
-    <div className="min-h-screen bg-[#071b1e] p-0 sm:p-5 lg:p-8">
+    <div className="min-h-screen bg-[#0B1F33] p-0 sm:p-5 lg:p-8">
       <div className="mx-auto grid min-h-screen max-w-[1360px] overflow-hidden bg-[#fbfaf7] shadow-2xl sm:min-h-[calc(100vh-2.5rem)] sm:rounded-2xl lg:grid-cols-[.92fr_1.08fr]">
-        <section className="relative hidden overflow-hidden bg-[#082b2f] p-12 text-white lg:flex lg:flex-col lg:justify-between">
+        <section className="relative hidden overflow-hidden bg-[#0F4D5B] p-12 text-white lg:flex lg:flex-col lg:justify-between">
           <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(135deg,transparent_45%,rgba(212,175,55,.12)_45%,rgba(212,175,55,.12)_46%,transparent_46%)] [background-size:42px_42px]" />
           <div className="relative"><BrandMark /></div>
           <div className="relative max-w-lg">
@@ -28,7 +28,7 @@ export default function AuthLayout({ icon: Icon, title, subtitle, footer, childr
               <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-[#00838f]/10 text-[#00747d]">
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </div>
-              <p className="text-[10px] font-bold uppercase tracking-[.22em] text-[#a0781d]">Link Marketing Services CRM</p>
+              <p className="text-[10px] font-bold uppercase tracking-[.22em] text-[#D4AF37]">Golden Marketing Services Agent Portal</p>
               <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight text-[#071b1e]">{title}</h1>
               {subtitle && <p className="mt-3 text-sm leading-6 text-[#647274]">{subtitle}</p>}
             </div>
