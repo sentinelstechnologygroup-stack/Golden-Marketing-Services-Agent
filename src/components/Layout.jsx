@@ -53,7 +53,7 @@ export default function Layout() {
   const canSee = (item) => !item.roles || item.roles.includes(role);
   const isActive = (item) => location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
   const currentItem = NAV_GROUPS.flatMap(group => group.items).find(isActive);
-  const initials = (user?.full_name || user?.email || 'Link Agent').split(/[\s@]+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join('');
+  const initials = (user?.full_name || user?.email || 'GMS Agent').split(/[\s@]+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join('');
 
   const handleLogout = () => {
     logout(false);
@@ -106,7 +106,7 @@ export default function Layout() {
         <div className="flex items-center gap-3 rounded-xl px-3 py-3">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#C9962E] text-xs font-bold text-[#07111F]">{initials}</span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold">{user?.full_name || user?.email || 'Link Agent'}</p>
+            <p className="truncate text-sm font-semibold">{user?.full_name || user?.email || 'GMS Agent'}</p>
             <p className="truncate text-[10px] text-white/42">{roleLabel}</p>
           </div>
           <button onClick={handleLogout} className="rounded-lg p-2 text-white/45 transition hover:bg-white/[.06] hover:text-white" aria-label="Sign out">
@@ -140,7 +140,7 @@ export default function Layout() {
               <Menu className="h-5 w-5" />
             </button>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-[#243b3e]">{currentItem?.label || 'Link CRM'}</p>
+              <p className="truncate text-sm font-semibold text-[#243b3e]">{currentItem?.label || 'GMS Agent CRM'}</p>
               <p className="hidden text-[10px] text-[#879192] sm:block">Lead response, qualification and routing operations</p>
             </div>
           </div>
