@@ -15,7 +15,7 @@ const STATUS_COLORS = {
   new: 'bg-blue-100 text-blue-700', contact_attempted: 'bg-amber-100 text-amber-700',
   connected: 'bg-purple-100 text-purple-700', qualified: 'bg-emerald-100 text-emerald-700',
   unqualified: 'bg-rose-100 text-rose-700', accepted: 'bg-emerald-100 text-emerald-700',
-  warm_transfer: 'bg-indigo-100 text-indigo-700', appointment_scheduled: 'bg-cyan-100 text-cyan-700',
+  warm_transfer: 'bg-indigo-100 text-indigo-700', appointment_scheduled: 'bg-[#EAF3F8] text-[#477B9F]',
   closed: 'bg-slate-100 text-slate-700', lost: 'bg-rose-100 text-rose-700',
   duplicate: 'bg-orange-100 text-orange-700', do_not_call: 'bg-red-100 text-red-700',
 };

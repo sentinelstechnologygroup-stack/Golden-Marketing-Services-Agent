@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { gmsClient } from '@/api/gmsClient';
 import { useAuth } from '@/lib/AuthContext';
 import { buildTenantFilter, canManageBrands } from '@/lib/tenantContext';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,8 +23,8 @@ export default function BusinessOwners() {
   const load = async () => {
     try {
       const [o, b] = await Promise.all([
-        base44.entities.BusinessOwner.filter(buildTenantFilter(user), '-created_date', 100),
-        base44.entities.Brand.filter(buildTenantFilter(user), '-created_date', 50),
+        gmsClient.entities.BusinessOwner.filter(buildTenantFilter(user), '-created_date', 100),
+        gmsClient.entities.Brand.filter(buildTenantFilter(user), '-created_date', 50),
       ]);
       setOwners(o); setBrands(b);
     } catch (e) { console.error(e); } finally { setLoading(false); }
@@ -70,7 +70,7 @@ function OwnerDialog({ brands, onClose, onSaved }) {
     const brand = brands.find(b => b.id === form.brand_id);
     setSaving(true);
     try {
-      await base44.entities.BusinessOwner.create({ ...form, organization_id: brand?.organization_id });
+      await gmsClient.entities.BusinessOwner.create({ ...form, organization_id: brand?.organization_id });
       toast({ title: 'Owner added' }); onSaved(); onClose();
     } catch (err) { toast({ title: 'Error', description: err.message, variant: 'destructive' }); } finally { setSaving(false); }
   };

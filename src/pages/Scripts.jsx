@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { gmsClient } from '@/api/gmsClient';
 import { useAuth } from '@/lib/AuthContext';
 import { buildTenantFilter, canManageScripts } from '@/lib/tenantContext';
 import { Card, CardContent } from '@/components/ui/card';
@@ -27,8 +27,8 @@ export default function Scripts() {
   const load = async () => {
     try {
       const [s, b] = await Promise.all([
-        base44.entities.Script.filter(buildTenantFilter(user), '-created_date', 200),
-        base44.entities.Brand.filter(buildTenantFilter(user), '-created_date', 50),
+        gmsClient.entities.Script.filter(buildTenantFilter(user), '-created_date', 200),
+        gmsClient.entities.Brand.filter(buildTenantFilter(user), '-created_date', 50),
       ]);
       setScripts(s); setBrands(b);
     } catch (e) { console.error(e); } finally { setLoading(false); }
@@ -39,7 +39,7 @@ export default function Scripts() {
 
   const approve = async (s) => {
     try {
-      await base44.entities.Script.update(s.id, { status: 'approved', approved_by: user.id, approved_date: new Date().toISOString(), effective_date: new Date().toISOString().slice(0, 10) });
+      await gmsClient.entities.Script.update(s.id, { status: 'approved', approved_by: user.id, approved_date: new Date().toISOString(), effective_date: new Date().toISOString().slice(0, 10) });
       toast({ title: 'Script approved' }); load();
     } catch (e) { toast({ title: 'Error', description: e.message, variant: 'destructive' }); }
   };
@@ -105,8 +105,8 @@ function ScriptDialog({ script, brands, onClose, onSaved }) {
     const payload = { ...form, organization_id: brand?.organization_id };
     setSaving(true);
     try {
-      if (script) { await base44.entities.Script.update(script.id, payload); toast({ title: 'Script updated' }); }
-      else { await base44.entities.Script.create(payload); toast({ title: 'Script created' }); }
+      if (script) { await gmsClient.entities.Script.update(script.id, payload); toast({ title: 'Script updated' }); }
+      else { await gmsClient.entities.Script.create(payload); toast({ title: 'Script created' }); }
       onSaved(); onClose();
     } catch (err) { toast({ title: 'Error', description: err.message, variant: 'destructive' }); } finally { setSaving(false); }
   };

@@ -10,24 +10,24 @@
     --card-foreground: 185 40% 12%;
     --popover: 40 33% 99%;
     --popover-foreground: 185 40% 12%;
-    --primary: 190 72% 20%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 39 63% 48%;
+    --primary-foreground: 210 41% 13%;
     --secondary: 42 24% 91%;
     --secondary-foreground: 185 40% 13%;
     --muted: 42 22% 92%;
     --muted-foreground: 184 10% 43%;
-    --accent: 190 38% 93%;
-    --accent-foreground: 185 56% 12%;
+    --accent: 39 42% 90%;
+    --accent-foreground: 207 22% 13%;
     --destructive: 0 70% 45%;
     --destructive-foreground: 0 0% 100%;
     --border: 42 20% 84%;
     --input: 42 18% 81%;
     --ring: 46 64% 52%;
-    --chart-1: 185 100% 25%;
-    --chart-2: 44 64% 52%;
-    --chart-3: 187 62% 15%;
-    --chart-4: 156 52% 40%;
-    --chart-5: 25 75% 54%;
+    --chart-1: 39 63% 48%;
+    --chart-2: 210 41% 13%;
+    --chart-3: 210 10% 70%;
+    --chart-4: 150 58% 34%;
+    --chart-5: 39 42% 75%;
     --radius: 0.65rem;
     --font-heading: Georgia, "Times New Roman", serif;
     --font-body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -37,7 +37,7 @@
     --sidebar-foreground: 40 33% 96%;
     --sidebar-primary: 46 64% 52%;
     --sidebar-primary-foreground: 185 61% 7%;
-    --sidebar-accent: 190 72% 20%;
+    --sidebar-accent: 39 63% 48%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 184 26% 18%;
     --sidebar-ring: 44 64% 52%;
@@ -70,7 +70,7 @@
   }
 
   html {
-    background: #f4f1ea;
+    background: #F6F1E7;
   }
 
   body {
@@ -83,7 +83,7 @@
   }
 
   ::selection {
-    background: rgba(0, 131, 143, 0.2);
+    background: rgba(231, 184, 75, 0.28);
   }
 
   input, textarea, select {
@@ -91,24 +91,24 @@
   }
 
   input:focus, textarea:focus, select:focus {
-    border-color: #00838f;
-    box-shadow: 0 0 0 3px rgba(0, 131, 143, 0.1);
+    border-color: #C9962E;
+    box-shadow: 0 0 0 3px rgba(231, 184, 75, 0.28);
     outline: none;
   }
 }
 
 @layer components {
-  .link-eyebrow {
+  .gms-eyebrow {
     @apply text-[10px] font-bold uppercase tracking-[.2em] text-[#9a741f];
   }
 
-  .link-panel {
-    @apply rounded-2xl border border-[#0b3034]/10 bg-white;
-    box-shadow: 0 18px 50px -36px rgba(0, 40, 45, 0.42);
+  .gms-panel {
+    @apply rounded-2xl border border-[#DED6C7] bg-white;
+    box-shadow: 0 18px 50px -36px rgba(7, 17, 31, 0.22);
   }
 
-  .link-gold-rule {
-    background: linear-gradient(90deg, #d4af37, rgba(212, 175, 55, 0));
+  .gms-gold-rule {
+    background: linear-gradient(90deg, #C9962E, rgba(212, 175, 55, 0));
     height: 1px;
   }
 }

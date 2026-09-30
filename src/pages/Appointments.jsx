@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { gmsClient } from '@/api/gmsClient';
 import { useAuth } from '@/lib/AuthContext';
 import { buildTenantFilter } from '@/lib/tenantContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
-const STATUS_COLORS = { booked: 'bg-cyan-100 text-cyan-700', confirmed: 'bg-blue-100 text-blue-700', attended: 'bg-emerald-100 text-emerald-700', canceled: 'bg-rose-100 text-rose-700', no_show: 'bg-amber-100 text-amber-700', outcome_unknown: 'bg-slate-100 text-slate-700' };
+const STATUS_COLORS = { booked: 'bg-[#EAF3F8] text-[#477B9F]', confirmed: 'bg-blue-100 text-blue-700', attended: 'bg-emerald-100 text-emerald-700', canceled: 'bg-rose-100 text-rose-700', no_show: 'bg-amber-100 text-amber-700', outcome_unknown: 'bg-slate-100 text-slate-700' };
 
 export default function Appointments() {
   const { user } = useAuth();
@@ -18,8 +18,8 @@ export default function Appointments() {
     (async () => {
       try {
         const [a, l] = await Promise.all([
-          base44.entities.Appointment.filter(buildTenantFilter(user), 'scheduled_start', 200),
-          base44.entities.Lead.filter(buildTenantFilter(user), '-created_date', 200),
+          gmsClient.entities.Appointment.filter(buildTenantFilter(user), 'scheduled_start', 200),
+          gmsClient.entities.Lead.filter(buildTenantFilter(user), '-created_date', 200),
         ]);
         setAppts(a); setLeads(l);
       } catch (e) { console.error(e); } finally { setLoading(false); }

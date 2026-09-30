@@ -67,7 +67,7 @@ export default function Layout() {
         if (!items.length) return null;
         return (
           <div key={group.label} className="mb-5">
-            <p className="mb-2 px-3 text-[9px] font-bold uppercase tracking-[.22em] text-[#d4af37]/75">{group.label}</p>
+            <p className="mb-2 px-3 text-[9px] font-bold uppercase tracking-[.22em] text-[#C9962E]/75">{group.label}</p>
             <div className="space-y-1">
               {items.map(item => {
                 const Icon = item.icon;
@@ -79,7 +79,7 @@ export default function Layout() {
                     onClick={() => setMobileOpen(false)}
                     className={`flex min-h-10 items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${active ? 'bg-white/10 text-white shadow-sm' : 'text-white/55 hover:bg-white/[.06] hover:text-white'}`}
                   >
-                    <Icon className={`h-[18px] w-[18px] shrink-0 ${active ? 'text-[#d4af37]' : ''}`} />
+                    <Icon className={`h-[18px] w-[18px] shrink-0 ${active ? 'text-[#C9962E]' : ''}`} />
                     <span className="min-w-0 flex-1 truncate">{item.label}</span>
                   </Link>
                 );
@@ -92,19 +92,19 @@ export default function Layout() {
   );
 
   const Sidebar = ({ mobile = false }) => (
-    <aside className={`${mobile ? 'flex' : 'hidden lg:flex'} h-full w-[278px] shrink-0 flex-col border-r border-white/[.08] bg-[#071b1e] text-white`}>
+    <aside className={`${mobile ? 'flex' : 'hidden lg:flex'} h-full w-[278px] shrink-0 flex-col border-r border-white/[.08] bg-[#07111F] text-white`}>
       <div className="flex h-[78px] shrink-0 items-center border-b border-white/[.08] px-6">
         <BrandMark />
       </div>
       <div className="px-4 py-4">
-        <Link to="/workspace" onClick={() => setMobileOpen(false)} className="flex w-full items-center gap-3 rounded-xl border border-[#d4af37]/25 bg-[#d4af37]/10 px-4 py-3 text-xs font-bold text-[#ead486] transition hover:bg-[#d4af37]/15">
+        <Link to="/workspace" onClick={() => setMobileOpen(false)} className="flex w-full items-center gap-3 rounded-xl border border-[#C9962E]/25 bg-[#C9962E]/10 px-4 py-3 text-xs font-bold text-[#ead486] transition hover:bg-[#C9962E]/15">
           <Sparkles className="h-4 w-4" /> Open agent workspace
         </Link>
       </div>
       <Navigation />
       <div className="shrink-0 border-t border-white/[.08] p-3">
         <div className="flex items-center gap-3 rounded-xl px-3 py-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#d4af37] text-xs font-bold text-[#071b1e]">{initials}</span>
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#C9962E] text-xs font-bold text-[#07111F]">{initials}</span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">{user?.full_name || user?.email || 'Link Agent'}</p>
             <p className="truncate text-[10px] text-white/42">{roleLabel}</p>
@@ -118,7 +118,7 @@ export default function Layout() {
   );
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f4f1ea]">
+    <div className="flex h-screen overflow-hidden bg-[#F6F1E7]">
       <Sidebar />
 
       {mobileOpen && (
@@ -134,9 +134,9 @@ export default function Layout() {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-[70px] shrink-0 items-center justify-between border-b border-[#071b1e]/10 bg-[#fbfaf7]/95 px-4 backdrop-blur sm:px-6 lg:px-8">
+        <header className="flex h-[70px] shrink-0 items-center justify-between border-b border-[#07111F]/10 bg-[#FBF8F2]/95 px-4 backdrop-blur sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3">
-            <button onClick={() => setMobileOpen(true)} className="rounded-lg border border-[#071b1e]/10 bg-white p-2 shadow-sm lg:hidden" aria-label="Open CRM navigation">
+            <button onClick={() => setMobileOpen(true)} className="rounded-lg border border-[#07111F]/10 bg-white p-2 shadow-sm lg:hidden" aria-label="Open CRM navigation">
               <Menu className="h-5 w-5" />
             </button>
             <div className="min-w-0">
@@ -148,11 +148,11 @@ export default function Layout() {
             <span className="hidden items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[10px] font-bold text-emerald-700 sm:inline-flex">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> System active
             </span>
-            <button className="relative rounded-lg border border-[#071b1e]/10 bg-white p-2.5 shadow-sm" aria-label="Notifications">
+            <button className="relative rounded-lg border border-[#07111F]/10 bg-white p-2.5 shadow-sm" aria-label="Notifications">
               <Bell className="h-4 w-4 text-[#334a4d]" />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#d4af37]" />
+              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#C9962E]" />
             </button>
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#071b1e] text-[10px] font-bold text-white">{initials}</span>
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#07111F] text-[10px] font-bold text-white">{initials}</span>
           </div>
         </header>
         <main className="min-h-0 flex-1 overflow-y-auto">

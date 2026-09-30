@@ -1,4 +1,4 @@
-export const LMS_LIFECYCLE = [
+export const GMS_LIFECYCLE = [
   { key: 'inquiry', label: 'Inquiry' },
   { key: 'verified_prospect', label: 'Verified Prospect' },
   { key: 'qualified_lead', label: 'Qualified Lead' },
@@ -10,7 +10,7 @@ export const LMS_LIFECYCLE = [
 ];
 
 export const lifecycleLabel = (value) =>
-  LMS_LIFECYCLE.find((stage) => stage.key === value)?.label || 'Inquiry';
+  GMS_LIFECYCLE.find((stage) => stage.key === value)?.label || 'Inquiry';
 
 export function deriveLifecycleStage(lead = {}) {
   if (lead.lifecycle_stage) return lead.lifecycle_stage;
@@ -33,6 +33,6 @@ export function verificationLabel(lead = {}) {
 }
 
 export function nextLifecycleStage(current) {
-  const index = LMS_LIFECYCLE.findIndex((stage) => stage.key === current);
-  return index >= 0 && index < LMS_LIFECYCLE.length - 1 ? LMS_LIFECYCLE[index + 1] : null;
+  const index = GMS_LIFECYCLE.findIndex((stage) => stage.key === current);
+  return index >= 0 && index < GMS_LIFECYCLE.length - 1 ? GMS_LIFECYCLE[index + 1] : null;
 }
