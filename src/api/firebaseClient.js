@@ -1,5 +1,4 @@
 import { getApp, getApps, initializeApp } from 'firebase/app';
-import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import { getAuth, sendPasswordResetEmail, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { normalizeEntityRow, normalizeEntityWrite } from './firebaseEntityContract';
@@ -24,14 +23,6 @@ const firebaseConfig = {
   appId: env('VITE_FIREBASE_AGENT_CRM_APP_ID') || env('VITE_FIREBASE_CUSTOMER_PORTAL_APP_ID') || DEFAULT_FIREBASE_CONFIG.appId,
 };
 const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
-const appCheckSiteKey = env('VITE_FIREBASE_AGENT_CRM_APP_CHECK_SITE_KEY');
-const appCheckEnabled = env('VITE_FIREBASE_ENABLE_APP_CHECK') === 'true';
-if (appCheckEnabled && appCheckSiteKey && typeof window !== 'undefined') {
-  initializeAppCheck(firebaseApp, {
-    provider: new ReCaptchaEnterpriseProvider(appCheckSiteKey),
-    isTokenAutoRefreshEnabled: true,
-  });
-}
 const auth = getAuth(firebaseApp);
 const functions = getFunctions(firebaseApp, 'us-central1');
 let profile = null;
