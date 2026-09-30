@@ -121,7 +121,7 @@ export default function LeadFormDialog({ open, onClose, brands, campaigns, onSav
               </select>
             </div>
           </div>
-          {!isEdit && <p className="text-xs text-muted-foreground rounded-md bg-muted px-3 py-2">New records enter the LMS Qualification Gate as <strong>Inquiry</strong> with mobile verification pending. Verification, qualification, handoff, and acceptance must be recorded before the opportunity advances.</p>}
+          {!isEdit && <p className="text-xs text-muted-foreground rounded-md bg-muted px-3 py-2">New records enter the GMS Qualification Gate as <strong>Inquiry</strong> with mobile verification pending. Verification, qualification, handoff, and acceptance must be recorded before the opportunity advances.</p>}
           <div>
             <Label>Priority (1 highest)</Label>
             <Input type="number" min={1} max={10} value={form.priority} onChange={e => update('priority', Number(e.target.value))} />

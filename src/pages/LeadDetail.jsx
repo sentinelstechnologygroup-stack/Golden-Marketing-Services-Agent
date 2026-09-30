@@ -262,7 +262,7 @@ export default function LeadDetail() {
 
       <Card className="border-primary/30">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> LMS Qualification Gate</CardTitle>
+          <CardTitle className="text-base flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> GMS Qualification Gate</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-sm">
