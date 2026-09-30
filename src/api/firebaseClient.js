@@ -25,7 +25,8 @@ const firebaseConfig = {
 };
 const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const appCheckSiteKey = env('VITE_FIREBASE_AGENT_CRM_APP_CHECK_SITE_KEY');
-if (appCheckSiteKey && typeof window !== 'undefined') {
+const appCheckEnabled = env('VITE_FIREBASE_ENABLE_APP_CHECK') === 'true';
+if (appCheckEnabled && appCheckSiteKey && typeof window !== 'undefined') {
   initializeAppCheck(firebaseApp, {
     provider: new ReCaptchaEnterpriseProvider(appCheckSiteKey),
     isTokenAutoRefreshEnabled: true,
