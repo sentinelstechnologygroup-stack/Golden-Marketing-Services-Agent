@@ -5,13 +5,23 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { normalizeEntityRow, normalizeEntityWrite } from './firebaseEntityContract';
 
 const env = (name) => import.meta.env?.[name] || '';
+// Public Firebase web configuration for the existing production backend.
+// Vercel variables still override these values when configured.
+const DEFAULT_FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyAHNMYWtu7RkVe0apq94oB271_sXvIIWXE',
+  authDomain: 'linkmarketing-agent-portal-crm.firebaseapp.com',
+  projectId: 'linkmarketing-agent-portal-crm',
+  storageBucket: 'linkmarketing-agent-portal-crm.firebasestorage.app',
+  messagingSenderId: '1089114348316',
+  appId: '1:1089114348316:web:8df2b05d88d1df8cc778d9',
+};
 const firebaseConfig = {
-  apiKey: env('VITE_FIREBASE_AGENT_CRM_API_KEY') || env('VITE_FIREBASE_CUSTOMER_PORTAL_API_KEY'),
-  authDomain: env('VITE_FIREBASE_AGENT_CRM_AUTH_DOMAIN') || env('VITE_FIREBASE_CUSTOMER_PORTAL_AUTH_DOMAIN'),
-  projectId: env('VITE_FIREBASE_AGENT_CRM_PROJECT_ID') || 'linkmarketing-agent-portal-crm',
-  storageBucket: env('VITE_FIREBASE_AGENT_CRM_STORAGE_BUCKET') || env('VITE_FIREBASE_CUSTOMER_PORTAL_STORAGE_BUCKET'),
-  messagingSenderId: env('VITE_FIREBASE_AGENT_CRM_MESSAGING_SENDER_ID') || env('VITE_FIREBASE_CUSTOMER_PORTAL_MESSAGING_SENDER_ID'),
-  appId: env('VITE_FIREBASE_AGENT_CRM_APP_ID') || env('VITE_FIREBASE_CUSTOMER_PORTAL_APP_ID'),
+  apiKey: env('VITE_FIREBASE_AGENT_CRM_API_KEY') || env('VITE_FIREBASE_CUSTOMER_PORTAL_API_KEY') || DEFAULT_FIREBASE_CONFIG.apiKey,
+  authDomain: env('VITE_FIREBASE_AGENT_CRM_AUTH_DOMAIN') || env('VITE_FIREBASE_CUSTOMER_PORTAL_AUTH_DOMAIN') || DEFAULT_FIREBASE_CONFIG.authDomain,
+  projectId: env('VITE_FIREBASE_AGENT_CRM_PROJECT_ID') || DEFAULT_FIREBASE_CONFIG.projectId,
+  storageBucket: env('VITE_FIREBASE_AGENT_CRM_STORAGE_BUCKET') || env('VITE_FIREBASE_CUSTOMER_PORTAL_STORAGE_BUCKET') || DEFAULT_FIREBASE_CONFIG.storageBucket,
+  messagingSenderId: env('VITE_FIREBASE_AGENT_CRM_MESSAGING_SENDER_ID') || env('VITE_FIREBASE_CUSTOMER_PORTAL_MESSAGING_SENDER_ID') || DEFAULT_FIREBASE_CONFIG.messagingSenderId,
+  appId: env('VITE_FIREBASE_AGENT_CRM_APP_ID') || env('VITE_FIREBASE_CUSTOMER_PORTAL_APP_ID') || DEFAULT_FIREBASE_CONFIG.appId,
 };
 const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const appCheckSiteKey = env('VITE_FIREBASE_AGENT_CRM_APP_CHECK_SITE_KEY');
