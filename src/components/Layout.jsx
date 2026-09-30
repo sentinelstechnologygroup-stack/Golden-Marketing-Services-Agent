@@ -163,7 +163,7 @@ export default function Layout() {
               <Menu className="h-5 w-5" />
             </button>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-[#243b3e]">{currentItem?.label || 'Link CRM'}</p>
+              <p className="truncate text-sm font-semibold text-[#243b3e]">{currentItem?.label || 'GMS Agent CRM'}</p>
               <p className="hidden text-[10px] text-[#879192] sm:block">Lead response, qualification and routing operations</p>
             </div>
           </div>

@@ -1,7 +1,7 @@
 import { firebaseClient } from '@/api/firebaseClient';
 
 /**
- * Contract-based API client for Link Marketing Solutions.
+ * Contract-based API client for Golden Marketing Services.
  *
  * Every method enforces tenant scope derived from the authenticated user
  * (organization_id + assigned_brand_ids + role) and normalizes list responses

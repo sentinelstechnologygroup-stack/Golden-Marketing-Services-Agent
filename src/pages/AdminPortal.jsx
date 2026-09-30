@@ -52,7 +52,7 @@ export default function AdminPortal() {
   return (
     <div className="space-y-6 p-5 sm:p-8">
       <header>
-        <p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#88702d]">Link Marketing Solutions</p>
+        <p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#C9962E]">Golden Marketing Services</p>
         <h1 className="mt-2 font-heading text-3xl font-semibold tracking-tight text-[#071b1e]">Admin Portal</h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-[#647274]">Shared multi-industry platform configuration, client provisioning, and tenant oversight.</p>
         {isSuperAdmin && <button type="button" onClick={() => setShowProvisioning(true)} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#082c36] px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#0b3b48]"><Plus className="h-4 w-4" /> Provision client</button>}
@@ -84,7 +84,7 @@ export default function AdminPortal() {
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[#071b1e]/70 p-4 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="provision-client-title">
           <form onSubmit={provision} className="my-6 w-full max-w-3xl rounded-2xl bg-[#fbfaf6] p-5 shadow-2xl sm:p-7">
             <div className="flex items-start justify-between gap-4">
-              <div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#88702d]">LMS Super Admin</p><h2 id="provision-client-title" className="mt-1 font-heading text-2xl font-semibold text-[#071b1e]">Provision a client organization</h2><p className="mt-2 text-sm text-[#647274]">Creates the tenant, Brand, workflow policies, protected route, initial administrator invitation, and Agent CRM assignments together.</p></div>
+              <div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#88702d]">GMS Super Admin</p><h2 id="provision-client-title" className="mt-1 font-heading text-2xl font-semibold text-[#071b1e]">Provision a client organization</h2><p className="mt-2 text-sm text-[#647274]">Creates the tenant, Brand, workflow policies, protected route, initial administrator invitation, and Agent CRM assignments together.</p></div>
               <button type="button" onClick={() => setShowProvisioning(false)} className="rounded-lg p-2 text-[#647274] hover:bg-black/5" aria-label="Close"><X className="h-5 w-5" /></button>
             </div>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">

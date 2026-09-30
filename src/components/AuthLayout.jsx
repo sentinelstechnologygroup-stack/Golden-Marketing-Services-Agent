@@ -28,7 +28,7 @@ export default function AuthLayout({ icon: Icon, title, subtitle, footer, childr
               <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-[#00838f]/10 text-[#00747d]">
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </div>
-              <p className="text-[10px] font-bold uppercase tracking-[.22em] text-[#a0781d]">Link Marketing Services CRM</p>
+              <p className="text-[10px] font-bold uppercase tracking-[.22em] text-[#C9962E]">Golden Marketing Services Agent CRM</p>
               <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight text-[#071b1e]">{title}</h1>
               {subtitle && <p className="mt-3 text-sm leading-6 text-[#647274]">{subtitle}</p>}
             </div>
