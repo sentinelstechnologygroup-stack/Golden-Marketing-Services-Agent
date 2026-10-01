@@ -50,6 +50,9 @@ export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [notificationStatus, setNotificationStatus] = useState('');
   const role = user?.role || 'lead_response_agent';
   const roleLabel = ROLE_LABELS[role] || role;
   const isPreviewAccess = false;
@@ -71,6 +74,16 @@ export default function Layout() {
     await firebaseClient.auth.switchTenant(tenantId);
     setMobileOpen(false);
     window.location.assign('/');
+  };
+  const toggleNotifications = async () => {
+    setNotificationsOpen(open => !open);
+    if (notificationsOpen) return;
+    setNotificationStatus('Loading notifications…');
+    try {
+      const rows = await firebaseClient.entities.Notification.list(100);
+      setNotifications(rows.filter(row => [user?.id, 'all'].includes(row.recipientUid)));
+      setNotificationStatus('');
+    } catch { setNotificationStatus('Notifications could not be loaded. Please try again.'); }
   };
 
   const Navigation = () => (
@@ -170,11 +183,11 @@ export default function Layout() {
           </div>
           <div className="flex items-center gap-2">
             {isPreviewAccess && <span className="items-center gap-2 rounded-full border border-rose-300 bg-rose-100 px-3 py-1.5 text-[10px] font-bold text-rose-800 sm:inline-flex">Preview access only</span>}
-            <button className="relative rounded-lg border border-[#001922]/10 bg-white p-2.5 shadow-sm" aria-label="Notifications">
+            <button onClick={toggleNotifications} aria-expanded={notificationsOpen} className="relative rounded-lg border border-[#001922]/10 bg-white p-2.5 shadow-sm" aria-label="Notifications">
               <Bell className="h-4 w-4 text-[#334a4d]" />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#C9A24B]" />
             </button>
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#001922] text-[10px] font-bold text-white">{initials}</span>
+            <Link to={['super_admin', 'admin'].includes(role) ? '/settings' : '/workspace'} aria-label="Open account workspace" className="flex h-9 w-9 items-center justify-center rounded-full bg-[#001922] text-[10px] font-bold text-white">{initials}</Link>
+            {notificationsOpen && <section aria-label="Notifications" className="absolute right-4 top-[65px] z-40 max-h-80 w-[min(360px,90vw)] overflow-auto rounded-xl border bg-white p-4 shadow-xl"><div className="flex justify-between"><h2 className="font-semibold">Notifications</h2><button onClick={() => setNotificationsOpen(false)} aria-label="Close notifications"><X size={18} /></button></div>{notificationStatus ? <p role="status" className="mt-3 text-sm">{notificationStatus}</p> : notifications.length ? notifications.map(item => <div key={item.id} className="mt-3 border-t pt-3"><p className="text-sm font-semibold">{item.title}</p><p className="mt-1 text-xs">{item.body}</p></div>) : <p className="mt-3 text-sm">No notifications for this client.</p>}</section>}
           </div>
         </header>
         <main className="min-h-0 flex-1 overflow-y-auto">

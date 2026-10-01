@@ -35,6 +35,7 @@ const ENTITY_COLLECTIONS = {
   Appointment: 'appointments', BusinessOwner: 'businessOwners', Script: 'scripts',
   QualificationForm: 'qualificationForms', RoutingRule: 'routingRules', PhoneNumber: 'phoneNumbers',
   Report: 'reports', AuditLog: 'auditLogs', User: 'members',
+  Notification: 'notifications',
 };
 const roleMap = { admin: 'super_admin', lms_super_admin: 'super_admin', supervisor: 'supervisor', agent: 'lead_response_agent', auditor: 'auditor' };
 const agentRoles = new Set(['super_admin', 'supervisor', 'lead_response_agent', 'auditor']);
