@@ -32,7 +32,7 @@ export default function InitialPasswordChange() {
             <div><label htmlFor="initial-confirm-password" className="block text-sm mb-2">Confirm new password</label>
               <input id="initial-confirm-password" className="w-full rounded-lg border p-3" type="password" autoComplete="new-password" required minLength={12} maxLength={128} value={confirm} onChange={(event) => setConfirm(event.target.value)} disabled={busy} /></div>
             {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
-            <button className="w-full rounded-lg p-3 font-semibold disabled:opacity-60" style={{ background: '#D4AF37' }} disabled={busy} type="submit">{busy ? 'Updating…' : 'Change password'}</button>
+            <button className="w-full rounded-lg p-3 font-semibold disabled:opacity-60" style={{ background: '#C9A24B' }} disabled={busy} type="submit">{busy ? 'Updating…' : 'Change password'}</button>
             <a className="block text-sm underline" href="/login">Return to sign-in</a>
           </form>
         )}

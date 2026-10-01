@@ -1,45 +1,34 @@
 import React from "react";
-import { ShieldCheck, LockKeyhole, Users } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import BrandMark from "@/components/BrandMark";
 
-export default function AuthLayout({ icon: Icon, title, subtitle, footer, children }) {
-  return (
-    <div className="min-h-screen bg-[#071b1e] p-0 sm:p-5 lg:p-8">
-      <div className="mx-auto grid min-h-screen max-w-[1360px] overflow-hidden bg-[#fbfaf7] shadow-2xl sm:min-h-[calc(100vh-2.5rem)] sm:rounded-2xl lg:grid-cols-[.92fr_1.08fr]">
-        <section className="relative hidden overflow-hidden bg-[#082b2f] p-12 text-white lg:flex lg:flex-col lg:justify-between">
-          <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(135deg,transparent_45%,rgba(212,175,55,.12)_45%,rgba(212,175,55,.12)_46%,transparent_46%)] [background-size:42px_42px]" />
-          <div className="relative"><BrandMark /></div>
-          <div className="relative max-w-lg">
-            <p className="text-[10px] font-bold uppercase tracking-[.25em] text-[#d4af37]">Authorized CRM workspace</p>
-            <h2 className="mt-5 font-heading text-5xl leading-[1.02] text-white">Every conversation.<br /><span className="text-[#e3bf58]">One clear system.</span></h2>
-            <p className="mt-6 max-w-md text-sm leading-7 text-white/60">A secure operating workspace for lead response, qualification, appointment setting, live transfers and accountable sales handoff.</p>
-          </div>
-          <div className="relative grid gap-3 text-xs text-white/62 sm:grid-cols-3">
-            <span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-[#d4af37]" /> Role controlled</span>
-            <span className="flex items-center gap-2"><LockKeyhole className="h-4 w-4 text-[#d4af37]" /> Protected access</span>
-            <span className="flex items-center gap-2"><Users className="h-4 w-4 text-[#d4af37]" /> Tenant separated</span>
-          </div>
-        </section>
+const TRUST_FEATURES = ["Protected agent workspace", "Tenant-separated customer information", "Role-based permissions", "Accountable qualification and handoff"];
 
-        <section className="flex min-h-screen items-center justify-center px-5 py-10 sm:min-h-0 sm:px-10 lg:px-16">
-          <div className="w-full max-w-md">
-            <div className="mb-9 lg:hidden"><BrandMark inverse={false} /></div>
-            <div className="mb-8">
-              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-[#00838f]/10 text-[#00747d]">
-                <Icon className="h-5 w-5" aria-hidden="true" />
-              </div>
-              <p className="text-[10px] font-bold uppercase tracking-[.22em] text-[#C9962E]">Golden Marketing Services Agent CRM</p>
-              <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight text-[#071b1e]">{title}</h1>
-              {subtitle && <p className="mt-3 text-sm leading-6 text-[#647274]">{subtitle}</p>}
-            </div>
-            <div className="rounded-2xl border border-[#071b1e]/10 bg-white p-6 shadow-[0_22px_60px_-38px_rgba(0,40,45,.52)] sm:p-8">
-              {children}
-            </div>
-            {footer && <div className="mt-6 text-center text-sm text-[#6b7677]">{footer}</div>}
-            <p className="mt-7 text-center text-[10px] leading-5 text-[#8a9495]">Authorized personnel only. Access attempts and workspace activity may be logged for security and quality assurance.</p>
-          </div>
-        </section>
-      </div>
+export default function AuthLayout({ title, subtitle, footer, children }) {
+  return (
+    <div className="min-h-screen flex flex-col lg:flex-row" style={{ background: "var(--offwhite)" }}>
+      <section className="lg:w-[42%] xl:w-[40%] text-white flex flex-col p-7 sm:p-10 lg:p-12 relative overflow-hidden" style={{ background: "var(--shell)" }}>
+        <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, var(--gold), transparent)" }} />
+        <BrandMark className="[&_img]:w-[264px]" />
+        <div className="mt-auto lg:my-auto pt-12 lg:pt-0">
+          <h2 className="font-heading text-[34px] sm:text-[42px] leading-[1.05] font-semibold tracking-tight">Welcome back.</h2>
+          <p className="mt-4 text-[15px] max-w-md leading-relaxed" style={{ color: "#BFD0CE" }}>Manage every lead from first response through qualification, appointment setting, live transfer, and final outcome — all in one protected workspace.</p>
+          <ul className="mt-9 space-y-3 max-w-md">
+            {TRUST_FEATURES.map((feature) => <li key={feature} className="flex items-start gap-3 text-[13.5px]" style={{ color: "#D9E6E3" }}><ShieldCheck className="w-[18px] h-[18px] mt-0.5 shrink-0" style={{ color: "var(--gold)" }} /><span>{feature}</span></li>)}
+          </ul>
+        </div>
+        <p className="mt-10 lg:mt-12 text-[11.5px]" style={{ color: "#7FA09D" }}>© {new Date().getFullYear()} Golden Marketing Services. All rights reserved.</p>
+      </section>
+      <section className="flex-1 flex items-center justify-center p-6 sm:p-10">
+        <div className="w-full max-w-[400px]">
+          <p className="text-[10px] uppercase tracking-[.2em] mb-2" style={{ color: "var(--teal)" }}>Agent Portal</p>
+          <h1 className="font-heading text-[26px] font-semibold leading-tight" style={{ color: "var(--shell)" }}>{title}</h1>
+          {subtitle && <p className="mt-2 text-[13.5px]" style={{ color: "var(--muted-ink)" }}>{subtitle}</p>}
+          <div className="mt-7">{children}</div>
+          {footer && <div className="mt-6 pt-6 border-t text-[12px]" style={{ borderColor: "var(--line)", color: "var(--muted-ink)" }}>{footer}</div>}
+          <p className="mt-7 text-[11.5px] leading-5" style={{ color: "var(--muted-ink)" }}>Authorized personnel only. Access attempts and workspace activity may be logged for security and quality assurance.</p>
+        </div>
+      </section>
     </div>
   );
 }

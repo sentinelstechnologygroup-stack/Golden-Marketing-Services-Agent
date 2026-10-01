@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
+import PortalSplash from "@/components/PortalSplash";
 import { safeReturnTo } from "@/lib/authReturnTo";
 
 export default function Login() {
@@ -13,6 +14,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [transition, setTransition] = useState("entry");
   // Post-login destination (e.g. the MCP OAuth consent page sends users here
   // with returnTo so the grant flow can resume). Same-origin paths only.
   const returnTo = safeReturnTo();
@@ -23,7 +25,7 @@ export default function Login() {
     setLoading(true);
     try {
       await firebaseClient.auth.loginViaEmailPassword(email, password);
-      window.location.href = returnTo;
+      setTransition("dashboard");
     } catch (err) {
       setError(err.message || "Invalid email or password");
     } finally {
@@ -31,11 +33,16 @@ export default function Login() {
     }
   };
 
+  if (transition) return <PortalSplash mode={transition} onComplete={() => {
+    if (transition === "dashboard") window.location.assign(returnTo);
+    else setTransition(null);
+  }} />;
+
   return (
     <AuthLayout
       icon={LogIn}
-      title="Welcome back"
-      subtitle="Log in to your account"
+      title="Sign in to your account"
+      subtitle="Use your business credentials to access your agent workspace."
       footer={
         <>
           Don't have an account?{" "}

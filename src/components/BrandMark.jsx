@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function BrandMark({ compact = false, inverse = true, className = '' }) {
   return (
-    <div className={`inline-flex max-w-full items-center ${inverse ? '' : 'rounded-xl bg-[#071b1e] px-3 py-2'} ${className}`}>
+    <div className={`inline-flex max-w-full items-center ${inverse ? '' : 'rounded-xl bg-[#001922] px-3 py-2'} ${className}`}>
       <img
         src="/brand/gms-logo-horizontal-transparent.png"
         alt="Golden Marketing Services Agent CRM"

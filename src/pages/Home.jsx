@@ -13,8 +13,8 @@ import {
 import { Inbox, CalendarCheck, TrendingUp, AlertCircle, ArrowRight, MessageSquareText } from 'lucide-react';
 
 const STATUS_COLORS = {
-  new: 'bg-[#00838f]/10 text-[#00747d]',
-  contact_attempted: 'bg-[#d4af37]/15 text-[#8a6618]',
+  new: 'bg-[#14857F]/10 text-[#0D6E68]',
+  contact_attempted: 'bg-[#C9A24B]/15 text-[#8a6618]',
   connected: 'bg-violet-100 text-violet-700',
   qualified: 'bg-emerald-100 text-emerald-700',
   unqualified: 'bg-rose-100 text-rose-700',
@@ -34,9 +34,9 @@ function MetricCard({ icon: Icon, label, value, detail, gold = false }) {
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs font-semibold text-[#6b7879]">{label}</p>
-            <p className="mt-3 font-body text-3xl font-bold tracking-tight text-[#071b1e]">{value}</p>
+            <p className="mt-3 font-body text-3xl font-bold tracking-tight text-[#001922]">{value}</p>
           </div>
-          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${gold ? 'bg-[#d4af37]/15 text-[#9a741f]' : 'bg-[#00838f]/10 text-[#00747d]'}`}>
+          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${gold ? 'bg-[#C9A24B]/15 text-[#9a741f]' : 'bg-[#14857F]/10 text-[#0D6E68]'}`}>
             <Icon className="h-5 w-5" />
           </span>
         </div>
@@ -109,7 +109,7 @@ export default function Home() {
   const recentLeads = leads.slice(0, 7);
 
   if (loading) {
-    return <div className="flex items-center justify-center py-28"><div className="h-8 w-8 animate-spin rounded-full border-2 border-[#00838f]/20 border-t-[#00838f]" /></div>;
+    return <div className="flex items-center justify-center py-28"><div className="h-8 w-8 animate-spin rounded-full border-2 border-[#14857F]/20 border-t-[#14857F]" /></div>;
   }
 
   const journey = [
@@ -124,10 +124,10 @@ export default function Home() {
       <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="link-eyebrow">Operations overview</p>
-          <h1 className="mt-2 font-heading text-3xl font-semibold tracking-tight text-[#071b1e] sm:text-4xl">Lead Response Dashboard</h1>
+          <h1 className="mt-2 font-heading text-3xl font-semibold tracking-tight text-[#001922] sm:text-4xl">Lead Response Dashboard</h1>
           <p className="mt-2 text-sm leading-6 text-[#647274]">Live visibility across response, qualification, appointments and sales handoff.</p>
         </div>
-        <Link to="/workspace" className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#071b1e] px-4 py-3 text-xs font-bold text-white shadow-sm transition hover:bg-[#0b3034]">
+        <Link to="/workspace" className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#001922] px-4 py-3 text-xs font-bold text-white shadow-sm transition hover:bg-[#032832]">
           Open agent workspace <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
@@ -141,10 +141,10 @@ export default function Home() {
 
       <div className="grid gap-6 xl:grid-cols-[1.35fr_.65fr]">
         <Card>
-          <CardHeader className="border-b border-[#071b1e]/[.08] pb-4">
+          <CardHeader className="border-b border-[#001922]/[.08] pb-4">
             <div>
               <p className="link-eyebrow">Seven-day activity</p>
-              <CardTitle className="mt-2 font-heading text-xl text-[#071b1e]">Program performance</CardTitle>
+              <CardTitle className="mt-2 font-heading text-xl text-[#001922]">Program performance</CardTitle>
               <p className="mt-1 text-xs text-[#788485]">Received leads and qualified opportunities</p>
             </div>
           </CardHeader>
@@ -153,25 +153,25 @@ export default function Home() {
               <AreaChart data={metrics.activity}>
                 <defs>
                   <linearGradient id="crmLeadFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#00838f" stopOpacity={0.32} />
-                    <stop offset="100%" stopColor="#00838f" stopOpacity={0.02} />
+                    <stop offset="0%" stopColor="#14857F" stopOpacity={0.32} />
+                    <stop offset="100%" stopColor="#14857F" stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid stroke="#e8e3d9" strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#718082' }} axisLine={false} tickLine={false} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#718082' }} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={{ borderRadius: 12, borderColor: '#d8d2c6', fontSize: 12 }} />
-                <Area type="monotone" dataKey="received" stroke="#00838f" strokeWidth={2.5} fill="url(#crmLeadFill)" />
-                <Area type="monotone" dataKey="qualified" stroke="#d4af37" strokeWidth={2.5} fill="transparent" />
+                <Area type="monotone" dataKey="received" stroke="#14857F" strokeWidth={2.5} fill="url(#crmLeadFill)" />
+                <Area type="monotone" dataKey="qualified" stroke="#C9A24B" strokeWidth={2.5} fill="transparent" />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="border-b border-[#071b1e]/[.08] pb-4">
+          <CardHeader className="border-b border-[#001922]/[.08] pb-4">
             <p className="link-eyebrow">Conversion path</p>
-            <CardTitle className="mt-2 font-heading text-xl text-[#071b1e]">Lead journey</CardTitle>
+            <CardTitle className="mt-2 font-heading text-xl text-[#001922]">Lead journey</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5 pt-6">
             {journey.map(([label, value, width], index) => (
@@ -181,12 +181,12 @@ export default function Home() {
                   <span className="text-[#7b8788]">{value} · {width}%</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-[#ece8df]">
-                  <div className={`h-full rounded-full ${index === journey.length - 1 ? 'bg-[#d4af37]' : 'bg-[#00838f]'}`} style={{ width: `${width}%` }} />
+                  <div className={`h-full rounded-full ${index === journey.length - 1 ? 'bg-[#C9A24B]' : 'bg-[#14857F]'}`} style={{ width: `${width}%` }} />
                 </div>
               </div>
             ))}
-            <div className="rounded-xl bg-[#071b1e] p-4 text-white">
-              <p className="text-[10px] uppercase tracking-[.17em] text-[#d4af37]">Operational focus</p>
+            <div className="rounded-xl bg-[#001922] p-4 text-white">
+              <p className="text-[10px] uppercase tracking-[.17em] text-[#C9A24B]">Operational focus</p>
               <p className="mt-2 flex items-center gap-2 text-sm font-semibold"><MessageSquareText className="h-4 w-4" /> Real conversations, structured results.</p>
             </div>
           </CardContent>
@@ -195,15 +195,15 @@ export default function Home() {
 
       <div className="grid gap-6 xl:grid-cols-[1.25fr_.75fr]">
         <Card>
-          <CardHeader className="flex-row items-center justify-between border-b border-[#071b1e]/[.08] pb-4">
+          <CardHeader className="flex-row items-center justify-between border-b border-[#001922]/[.08] pb-4">
             <div><CardTitle className="font-heading text-xl">Recent lead activity</CardTitle><p className="mt-1 text-xs text-[#788485]">Latest conversations and handoffs</p></div>
-            <Link to="/leads" className="text-xs font-bold text-[#00747d]">View all</Link>
+            <Link to="/leads" className="text-xs font-bold text-[#0D6E68]">View all</Link>
           </CardHeader>
           <CardContent className="p-0">
             {recentLeads.length === 0 ? (
               <p className="px-6 py-14 text-center text-sm text-muted-foreground">No leads yet. New activity will appear here.</p>
             ) : (
-              <div className="divide-y divide-[#071b1e]/[.08]">
+              <div className="divide-y divide-[#001922]/[.08]">
                 {recentLeads.map(lead => (
                   <Link key={lead.id} to={`/leads/${lead.id}`} className="flex items-center justify-between gap-4 px-5 py-4 transition hover:bg-[#faf8f3] sm:px-6">
                     <div className="min-w-0">
@@ -219,7 +219,7 @@ export default function Home() {
         </Card>
 
         <Card>
-          <CardHeader className="border-b border-[#071b1e]/[.08] pb-4">
+          <CardHeader className="border-b border-[#001922]/[.08] pb-4">
             <CardTitle className="font-heading text-xl">Leads by brand</CardTitle>
             <p className="text-xs text-[#788485]">Current assignment volume</p>
           </CardHeader>
@@ -233,7 +233,7 @@ export default function Home() {
                   <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: '#718082' }} axisLine={false} tickLine={false} />
                   <YAxis type="category" dataKey="name" width={88} tick={{ fontSize: 10, fill: '#4b5d60' }} axisLine={false} tickLine={false} />
                   <Tooltip contentStyle={{ borderRadius: 12, borderColor: '#d8d2c6', fontSize: 12 }} />
-                  <Bar dataKey="leads" fill="#00838f" radius={[0, 6, 6, 0]} />
+                  <Bar dataKey="leads" fill="#14857F" radius={[0, 6, 6, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
