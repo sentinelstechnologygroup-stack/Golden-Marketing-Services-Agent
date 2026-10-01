@@ -11,7 +11,7 @@ import { ShieldCheck, AlertTriangle, CheckCircle2, XCircle, RefreshCw, PhoneOff,
 export default function Settings() {
   const { user } = useAuth();
   return <div className="space-y-6">
-    {user?.role === 'super_admin' && <GoHighLevelConnection tenantId="gms-internal" locationId="5BAXXiLlxJSiM5tspPQy" internal />}
+    {user?.lmsSuperAdmin === true && <GoHighLevelConnection tenantId="gms-internal" locationId="5BAXXiLlxJSiM5tspPQy" internal />}
     <TelephonySettings />
   </div>;
 }
