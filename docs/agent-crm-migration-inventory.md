@@ -69,6 +69,18 @@ For each item, record the canonical contract route/collection, authorization rul
 
 ## CRM implementation sequence
 
+### GoHighLevel bounded connector (September 30, 2026)
+
+Preserve onboarding fields and existing Firebase operational screens. Add a saved-client
+connection check and read-only conversations/calendars/opportunities panel. Canonical
+onboarding location ownership remains `ghlLocationTenants`; credentials stay in Secret
+Manager. Full-location reads require fresh platform-admin claims or unscoped active
+tenant administrator membership. Assigned agents cannot read location-wide CRM data;
+Lead Detail includes a read-only conversation control: ordinary agents require
+active assignment, matching brand and lead owner, plus a backend-owned provider
+contact mapping. Automatic mapping/webhook synchronization remains pending.
+No outbound messages, telephony changes, automatic provisioning or fabricated records.
+
 ### GMS central onboarding update (September 30, 2026)
 
 User approved replacing scattered onboarding/provisioning with Administration >

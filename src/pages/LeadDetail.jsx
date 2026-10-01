@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { firebaseClient } from '@/api/firebaseClient';
 import { useAuth } from '@/lib/AuthContext';
+import GoHighLevelLeadConversation from '@/components/GoHighLevelLeadConversation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -241,6 +242,7 @@ export default function LeadDetail() {
       </div>
 
       {/* Pre-call context banner */}
+      <GoHighLevelLeadConversation key={id} leadId={id} />
       <Card className="border-l-4 border-l-primary">
         <CardContent className="p-4 space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
