@@ -10,6 +10,7 @@ export default function GoHighLevelLeadConversation({ leadId }) {
     try {
       const response = await firebaseClient.functions.invoke('readGoHighLevelResource', { resource: 'conversations', leadId });
       setItems(response.items);
+      if (response.excludedExampleCount) setError('Clearly labelled GoHighLevel example records were excluded from production results.');
     } catch (failure) { setError(failure.message); }
     finally { setBusy(false); }
   }

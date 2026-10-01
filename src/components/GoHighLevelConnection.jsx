@@ -33,7 +33,8 @@ export default function GoHighLevelConnection({ tenantId, locationId, disabled, 
     {message && <p role="status" className="text-sm">{message}</p>}
     {result && <div className="overflow-x-auto"><p className="mb-2 text-xs">Source: GoHighLevel · {result.resource} · fetched {new Date(result.fetchedAt).toLocaleString()}</p>
       <table className="w-full text-left text-sm"><thead><tr><th className="p-2">Name / contact</th><th className="p-2">Status / details</th><th className="p-2">Provider ID</th></tr></thead><tbody>{result.items.map(item => <tr key={item.id} className="border-t"><td className="p-2">{item.name || item.contactName || item.fullName || item.contactId || 'Not supplied'}</td><td className="p-2">{item.status || item.lastMessageBody || item.description || (item.isActive === undefined ? 'Not supplied' : item.isActive ? 'Active' : 'Inactive')}</td><td className="p-2">{item.id}</td></tr>)}</tbody></table>
-      {!result.items.length && <p className="p-3 text-sm">No {result.resource} returned by this sub-account.</p>}
+      {result.excludedExampleCount > 0 && <p role="status" className="p-3 text-sm">GoHighLevel returned {result.excludedExampleCount} clearly labelled example records. They are excluded from production results, not deleted from the provider.</p>}
+      {!result.items.length && <p className="p-3 text-sm">No production {result.resource} in this response.</p>}
     </div>}
   </section>;
 }
