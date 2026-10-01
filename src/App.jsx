@@ -32,11 +32,16 @@ import Settings from '@/pages/Settings';
 import Campaigns from '@/pages/Campaigns';
 import LeadSources from '@/pages/LeadSources';
 import AdminPortal from '@/pages/AdminPortal';
+import Clients from '@/pages/Clients';
 import { isAdminRole } from '@/lib/tenantContext';
 
 function AdminPortalRoute() {
   const { user } = useAuth();
   return isAdminRole(user?.role) ? <AdminPortal /> : <Navigate to='/' replace />;
+}
+function ClientsRoute() {
+  const { user } = useAuth();
+  return ['super_admin', 'lms_super_admin'].includes(user?.role) ? <Clients /> : <Navigate to='/' replace />;
 }
 
 const AuthenticatedApp = () => {
@@ -80,6 +85,7 @@ const AuthenticatedApp = () => {
           <Route path="/campaigns" element={<Campaigns />} />
           <Route path="/lead-sources" element={<LeadSources />} />
           <Route path="/admin" element={<AdminPortalRoute />} />
+          <Route path="/clients" element={<ClientsRoute />} />
         </Route>
       </Route>
       <Route path="*" element={<PageNotFound />} />

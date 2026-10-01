@@ -35,6 +35,7 @@ const NAV_GROUPS = [
   {
     label: 'Administration',
     items: [
+      { label: 'Clients', path: '/clients', icon: Building2, roles: ['super_admin', 'lms_super_admin'] },
       { label: 'Admin Portal', path: '/admin', icon: UserCog, roles: ['admin', 'super_admin', 'org_admin', 'brand_admin'] },
       { label: 'Phone Numbers', path: '/phone-numbers', icon: Phone, roles: null },
       { label: 'Client Contacts', path: '/business-owners', icon: Users, roles: null },

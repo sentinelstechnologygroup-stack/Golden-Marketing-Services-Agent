@@ -69,6 +69,17 @@ For each item, record the canonical contract route/collection, authorization rul
 
 ## CRM implementation sequence
 
+### GMS central onboarding update (September 30, 2026)
+
+User approved replacing scattered onboarding/provisioning with Administration >
+Clients. The previous provisionClient dialog now links to one sectioned form.
+Tenant config/onboarding is the canonical source; managed operational records are
+projections. Existing unmanaged records remain unchanged. Shared documents and
+authenticated campaign approvals are visible in the Customer Portal. Customer
+identity preparation and gated routing are server-only. Provider verification,
+credentials/webhooks and ad publishing remain external prerequisites, not mocked
+success states. See docs/client-onboarding.md for the implementation boundaries.
+
 1. Backend/Core publishes and versions the canonical identity, tenant, data, and operation contract, with emulator/staging access.
 2. Replace CRM authentication with invitation-based Firebase identity and server-verified CRM profile/membership loading. Keep public self-registration disabled.
 3. Replace the centralized API client and every direct screen-level legacy provider call with the approved backend adapter. Preserve the legacy feature surface above.

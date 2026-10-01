@@ -113,7 +113,7 @@ export default function Home() {
   }
 
   const journey = [
-    ['Received', metrics.total, 100],
+    ['Received', metrics.total, metrics.percent(metrics.total)],
     ['Connected', metrics.connected, metrics.percent(metrics.connected)],
     ['Qualified', metrics.qualified, metrics.percent(metrics.qualified)],
     ['Handoff', metrics.appointments, metrics.percent(metrics.appointments)],
@@ -178,7 +178,7 @@ export default function Home() {
               <div key={label}>
                 <div className="mb-2 flex justify-between text-xs">
                   <span className="font-semibold text-[#405054]">{label}</span>
-                  <span className="text-[#7b8788]">{value} · {width}%</span>
+                  <span className="text-[#7b8788]">{value} · {metrics.total ? `${width}%` : 'No data'}</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-[#ece8df]">
                   <div className={`h-full rounded-full ${index === journey.length - 1 ? 'bg-[#C9A24B]' : 'bg-[#14857F]'}`} style={{ width: `${width}%` }} />

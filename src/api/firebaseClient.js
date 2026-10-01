@@ -1,6 +1,7 @@
 import { getApp, getApps, initializeApp } from 'firebase/app';
 import { getAuth, sendPasswordResetEmail, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { normalizeEntityRow, normalizeEntityWrite } from './firebaseEntityContract';
 
 const env = (name) => import.meta.env?.[name] || '';
@@ -121,6 +122,16 @@ function entityApi(entityName) {
 }
 
 export const firebaseClient = {
+  clients: {
+    invoke: async (name, data = {}) => (await httpsCallable(functions, name)(data)).data,
+    upload: async (clientId, file) => {
+      const documentId = crypto.randomUUID();
+      const storagePath = `tenants/${clientId}/documents/${documentId}/${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      await uploadBytes(ref(getStorage(firebaseApp), storagePath), file, { contentType: file.type || 'application/octet-stream' });
+      return (await httpsCallable(functions, 'addGmsClientDocument')({ clientId, documentId, storagePath, name: file.name })).data;
+    },
+    download: async (storagePath) => getDownloadURL(ref(getStorage(firebaseApp), storagePath)),
+  },
   app: { getPublicSettings: async () => ({ id: 'firebase-agent-crm', public_settings: { backend: 'firebase' } }) },
   auth: {
     completeInitialPasswordChange: async (newPassword) => {
