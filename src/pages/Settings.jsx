@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api, ApiError } from '@/lib/apiClient';
 import { useAuth } from '@/lib/AuthContext';
+import GoHighLevelConnection from '@/components/GoHighLevelConnection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,14 @@ import { AuthError, ErrorState, TenantBadge } from '@/components/ContractState';
 import { ShieldCheck, AlertTriangle, CheckCircle2, XCircle, RefreshCw, PhoneOff, PhoneCall } from 'lucide-react';
 
 export default function Settings() {
+  const { user } = useAuth();
+  return <div className="space-y-6">
+    {user?.role === 'super_admin' && <GoHighLevelConnection tenantId="gms-internal" locationId="5BAXXiLlxJSiM5tspPQy" internal />}
+    <TelephonySettings />
+  </div>;
+}
+
+function TelephonySettings() {
   const { user } = useAuth();
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);

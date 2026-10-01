@@ -69,6 +69,20 @@ For each item, record the canonical contract route/collection, authorization rul
 
 ## CRM implementation sequence
 
+### Internal connection correction and resource expansion (September 30, 2026)
+
+GMS internal is a platform workspace, not a customer. Preserve its provider location
+and audit history but exclude internal workspaces from customer onboarding lists.
+Expose its CRM connection in Admin Settings, independently of telephony readiness.
+The new Work > GMS CRM page reads live conversations, calendars, opportunities,
+pipelines (including stages), workflows, forms and campaigns through the existing
+server-owned location mapping. Settings retains the independent internal connection.
+No provider interface is embedded or linked. Existing qualification, billing,
+chart, table and demo behavior remains unchanged. Credentials remain server-only.
+Automatic contact linking, signed webhook registration/processing, CRM write actions
+and Customer Portal synchronization are NOT completed by this read-only expansion.
+Do not represent the seven resource views as feature parity with the whole CRM.
+
 ### GoHighLevel bounded connector (September 30, 2026)
 
 Preserve onboarding fields and existing Firebase operational screens. Add a saved-client

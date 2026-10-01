@@ -33,6 +33,7 @@ import Campaigns from '@/pages/Campaigns';
 import LeadSources from '@/pages/LeadSources';
 import AdminPortal from '@/pages/AdminPortal';
 import Clients from '@/pages/Clients';
+import CRM from '@/pages/CRM';
 import { isAdminRole } from '@/lib/tenantContext';
 
 function AdminPortalRoute() {
@@ -86,6 +87,7 @@ const AuthenticatedApp = () => {
           <Route path="/lead-sources" element={<LeadSources />} />
           <Route path="/admin" element={<AdminPortalRoute />} />
           <Route path="/clients" element={<ClientsRoute />} />
+          <Route path="/crm" element={<CRM />} />
         </Route>
       </Route>
       <Route path="*" element={<PageNotFound />} />

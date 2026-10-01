@@ -17,6 +17,7 @@ const NAV_GROUPS = [
       { label: 'Dashboard', path: '/', icon: LayoutDashboard, roles: null },
       { label: 'Agent Workspace', path: '/workspace', icon: Headphones, roles: null },
       { label: 'Lead Inbox', path: '/leads', icon: Inbox, roles: null },
+      { label: 'GMS CRM', path: '/crm', icon: Building2, roles: ['admin', 'super_admin', 'org_admin', 'supervisor'] },
       { label: 'Supervisor', path: '/supervisor', icon: Eye, roles: ['admin', 'super_admin', 'org_admin', 'brand_admin', 'supervisor'] },
       { label: 'Appointments', path: '/appointments', icon: Calendar, roles: null },
     ],
