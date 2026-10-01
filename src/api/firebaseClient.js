@@ -73,6 +73,10 @@ function applyAssignment(raw, claimedRole, assignments, selected) {
 
 async function getProfile() {
   const raw = (await httpsCallable(functions, 'getMyProfile')()).data || {};
+  if (raw.mustChangePassword) {
+    profile = { ...raw, id: raw.uid, role: 'password_change_required', agentAssignments: [], tenantOptions: [] };
+    return profile;
+  }
   const token = await auth.currentUser?.getIdTokenResult();
   const { activeAssignments, selected } = selectAssignment(raw.agentAssignments);
   const assignmentRole = roleMap[selected?.role] || selected?.role;
@@ -119,6 +123,11 @@ function entityApi(entityName) {
 export const firebaseClient = {
   app: { getPublicSettings: async () => ({ id: 'firebase-agent-crm', public_settings: { backend: 'firebase' } }) },
   auth: {
+    completeInitialPasswordChange: async (newPassword) => {
+      await httpsCallable(functions, 'completeInitialPasswordChange')({ newPassword });
+      profile = null;
+      await signOut(auth);
+    },
     loginViaEmailPassword: async (email, password) => { await signInWithEmailAndPassword(auth, email.trim(), password); return getProfile(); },
     me: async () => {
       await auth.authStateReady();
