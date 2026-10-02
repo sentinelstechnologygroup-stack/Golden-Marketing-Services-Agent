@@ -1,10 +1,25 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { firebaseClient } from '@/api/firebaseClient';
 
 export default function GoHighLevelLeadConversation({ leadId }) {
   const [items, setItems] = useState(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [canLink, setCanLink] = useState(false);
+  const [contactId, setContactId] = useState('');
+  useEffect(() => {
+    let active = true;
+    firebaseClient.auth.me().then(profile => { if (active) setCanLink(import.meta.env.VITE_GMS_CONTACT_LINKING_ENABLED === 'true' && profile.lmsSuperAdmin === true); }).catch(() => {});
+    return () => { active = false; };
+  }, []);
+  async function link(event) {
+    event.preventDefault(); setBusy(true); setError(''); setItems(null);
+    try {
+      await firebaseClient.functions.invoke('linkGoHighLevelContact', { leadId, contactId: contactId.trim() });
+      setError('Contact link verified. You can now load this lead’s CRM conversation.');
+    } catch (failure) { setError(failure.message); }
+    finally { setBusy(false); }
+  }
   async function load() {
     setBusy(true); setError(''); setItems(null);
     try {
@@ -18,6 +33,11 @@ export default function GoHighLevelLeadConversation({ leadId }) {
     <h2 className="font-heading text-xl">GMS CRM conversation</h2>
     <p className="text-sm text-muted-foreground">Read-only CRM activity for this lead. Agents can access only their assigned brand and lead; a verified contact link is required.</p>
     <button type="button" disabled={busy} onClick={load} className="rounded-lg bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">{busy ? 'Loading…' : 'Load CRM conversation'}</button>
+    {canLink && <form onSubmit={link} className="flex flex-wrap gap-2">
+      <label className="text-sm">GoHighLevel contact reference<input required value={contactId} onChange={event => setContactId(event.target.value)} maxLength={120} className="ml-2 rounded border p-2" /></label>
+      <button disabled={busy || !contactId.trim()} className="rounded border px-3 py-2 disabled:opacity-50">Verify contact link</button>
+      <p className="w-full text-xs text-muted-foreground">The backend verifies client ownership and matching email or phone. Existing links cannot be overwritten here.</p>
+    </form>}
     {error && <p role="status" className="text-sm">{error}</p>}
     {items?.map(item => <article key={item.id} className="rounded-lg border p-3 text-sm"><p className="font-semibold">{item.contactName || item.fullName || 'Contact conversation'}</p><p>{item.lastMessageBody || 'No message preview supplied.'}</p><p className="text-xs text-muted-foreground">{item.lastMessageType || 'Conversation'} · Unread: {item.unreadCount ?? 0}</p></article>)}
     {items?.length === 0 && <p className="text-sm">No conversation returned for this contact.</p>}

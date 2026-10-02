@@ -1,6 +1,6 @@
-# Link Marketing Solutions Agent CRM
+# Golden Marketing Services Agent CRM
 
-This is the Firebase-backed Agent CRM for Link Marketing Solutions.
+This is the Firebase-backed Agent CRM for Golden Marketing Services.
 
 ## Local development
 

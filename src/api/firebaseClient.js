@@ -1,3 +1,4 @@
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import { getApp, getApps, initializeApp } from 'firebase/app';
 import { getAuth, sendPasswordResetEmail, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -24,6 +25,16 @@ const firebaseConfig = {
   appId: env('VITE_FIREBASE_AGENT_CRM_APP_ID') || env('VITE_FIREBASE_CUSTOMER_PORTAL_APP_ID') || DEFAULT_FIREBASE_CONFIG.appId,
 };
 const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
+// Configure only after registering the GMS production domains in App Check.
+// A missing key leaves the pre-existing authentication behavior unchanged.
+const appCheckSiteKey = env('VITE_FIREBASE_APPCHECK_SITE_KEY');
+const usingEmulators = import.meta.env.DEV && env('VITE_FIREBASE_USE_EMULATORS') === 'true';
+export const firebaseAppCheck = firebaseApp && env('VITE_FIREBASE_APPCHECK_ENABLED') === 'true' && appCheckSiteKey && !usingEmulators
+  ? initializeAppCheck(firebaseApp, {
+    provider: new ReCaptchaEnterpriseProvider(appCheckSiteKey),
+    isTokenAutoRefreshEnabled: true,
+  })
+  : null;
 const auth = getAuth(firebaseApp);
 const functions = getFunctions(firebaseApp, 'us-central1');
 let profile = null;
@@ -39,14 +50,18 @@ const ENTITY_COLLECTIONS = {
 };
 const roleMap = { admin: 'super_admin', lms_super_admin: 'super_admin', supervisor: 'supervisor', agent: 'lead_response_agent', auditor: 'auditor' };
 const agentRoles = new Set(['super_admin', 'supervisor', 'lead_response_agent', 'auditor']);
-const ACTIVE_TENANT_KEY = 'lms-agent-active-tenant';
+const ACTIVE_TENANT_KEY = 'gms-agent-active-tenant';
+const LEGACY_ACTIVE_TENANT_KEY = 'lms-agent-active-tenant';
 const getTenantId = () => profile?.organization_id || null;
 
 function selectAssignment(assignments) {
   const activeAssignments = (assignments || []).filter((item) => item.status === 'active' && item.tenantStatus !== 'disabled');
-  const storedTenantId = window.localStorage.getItem(ACTIVE_TENANT_KEY);
+  const storedTenantId = window.localStorage.getItem(ACTIVE_TENANT_KEY) || window.localStorage.getItem(LEGACY_ACTIVE_TENANT_KEY);
   const selected = activeAssignments.find((item) => item.tenantId === storedTenantId) || activeAssignments[0] || null;
-  if (selected?.tenantId) window.localStorage.setItem(ACTIVE_TENANT_KEY, selected.tenantId);
+  if (selected?.tenantId) {
+    window.localStorage.setItem(ACTIVE_TENANT_KEY, selected.tenantId);
+    window.localStorage.removeItem(LEGACY_ACTIVE_TENANT_KEY);
+  }
   return { activeAssignments, selected };
 }
 

@@ -2,7 +2,7 @@
 
 ## Project Context
 
-This is the Link Marketing Solutions Agent CRM, a Vercel-deployable React/Vite application being migrated away from legacy provider. Scope work to this Agent CRM repository; the corporate website and Customer Portal are separate projects.
+This is the Golden Marketing Services Agent CRM, a Vercel-deployable React/Vite application being migrated away from legacy provider. Scope work to this Agent CRM repository; the corporate website and Customer Portal are separate projects.
 
 Preserve existing routes, screens, fields, actions, workflows, responsive behavior, and visual design unless the user explicitly approves a change. Before replacing an integration, record feature parity in `docs/agent-crm-migration-inventory.md`.
 
