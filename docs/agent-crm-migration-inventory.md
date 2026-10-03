@@ -140,3 +140,13 @@ shared call dispatch/requeue, voicemail, message callbacks, token refresh,
 transcription and GHL evidence sync need implementation and live verification.
 The new backend telephony README records configuration and these activation
 blockers. Do not report SDK compilation as live phone-system acceptance.
+
+## Telnyx-only production migration
+
+Client onboarding now uses a Telnyx phone number ID and E.164 number. Phone
+records default to Telnyx; other provider SDKs, secrets and backend adapters
+are removed from the active calling path. Browser microphone access is allowed
+only for the portal origin. Existing historical call records and demo layouts
+are preserved. Recording, signed status events, call controls and tenant/campaign
+number selection retain their existing gated workflow. Calling and warm transfer
+remain disabled pending account provisioning and live media acceptance.

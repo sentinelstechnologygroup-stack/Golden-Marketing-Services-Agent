@@ -1,7 +1,7 @@
 # Central client onboarding
 
 Administration > Clients replaces the activate-on-create provisioning dialog.
-Business sequence: create GHL sub-account, set up Twilio number, complete one
+Business sequence: create GHL sub-account, set up Telnyx number, complete one
 sectioned GMS onboarding form. No provider credentials are accepted by this form.
 
 Canonical source: tenants/{tenantId}/config/onboarding. Saving uses an optimistic
@@ -17,6 +17,6 @@ for customers. Any edit pauses managed intake. Live integration checks are not
 represented by user-editable checkboxes.
 
 Remaining external prerequisites: location-scoped GHL credential in backend
-secret storage, real provider verification/webhooks, Twilio number verification,
+secret storage, real provider verification/webhooks, Telnyx number verification,
 customer identity invitation delivery and ad-platform publishing connector.
 These are not simulated by this feature. No ads are published by saving a draft.

@@ -195,9 +195,9 @@ SMS/browser notifications omit unnecessary sensitive data. Preferences by org/br
 | POST | `/api/telephony/calls/:callId/resume` |
 | POST | `/api/telephony/calls/:callId/warm-transfer` |
 
-`GET /api/telephony/status` → `{ "mode": "mock" | "production", "healthy": true, "provider": "twilio" | null, "checklist": [...] }`.
+`GET /api/telephony/status` → `{ "mode": "mock" | "production", "healthy": true, "provider": "telnyx" | null, "checklist": [...] }`.
 Mock mode is clearly labeled; test calls/transfers are marked. Production mode requires all
-Twilio secrets present and a successful health check.
+Telnyx secrets present and a successful health check.
 
 ## 13. Phone Numbers
 
@@ -212,12 +212,12 @@ Twilio secrets present and a successful health check.
 | Method | Path |
 |---|---|
 | POST | `/webhooks/leads` |
-| POST | `/webhooks/twilio/call-status` |
-| POST | `/webhooks/twilio/recording-complete` |
-| POST | `/webhooks/twilio/sms` |
+| POST | `/webhooks/telnyx/call-status` |
+| POST | `/webhooks/telnyx/recording-complete` |
+| POST | `/webhooks/telnyx/sms` |
 
 Webhooks are idempotent, retry failed deliveries, and never destroy lead data on provider outage.
-Twilio webhook signatures are validated server-side.
+Telnyx webhook signatures are validated server-side.
 
 ## UI Behavior Rules
 

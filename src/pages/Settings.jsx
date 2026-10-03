@@ -37,7 +37,7 @@ function TelephonySettings() {
     ? <AuthError error={error} onRetry={load} /> : <ErrorState error={error} onRetry={load} />;
   if (!status) return null;
 
-  const isMock = status.mode === 'mock';
+  const isMock = status.mode !== 'production';
 
   return (
     <div className="space-y-6">
@@ -68,7 +68,7 @@ function TelephonySettings() {
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-heading font-semibold">
-                  {isMock ? 'Twilio is OFF — Test Mode' : 'Twilio is LIVE — Production Mode'}
+                  {isMock ? 'Telnyx calling is disabled' : 'Telnyx is LIVE — Production Mode'}
                 </h2>
                 <Badge className={isMock ? 'bg-amber-200 text-amber-800 border-0' : 'bg-emerald-200 text-emerald-800 border-0'}>
                   {status.mode?.toUpperCase()}
@@ -76,8 +76,8 @@ function TelephonySettings() {
               </div>
               <p className="text-sm mt-1 text-muted-foreground">
                 {isMock
-                  ? 'No real calls or SMS are being made. All telephony actions return simulated responses. You will not incur any Twilio charges.'
-                  : 'Calls and SMS are routed through Twilio. Recording and webhook status will attach to leads. Charges will apply.'}
+                  ? 'Live calling is disabled. Complete and verify the Telnyx configuration before activation.'
+                  : 'Calls and SMS are routed through Telnyx. Recording and webhook status will attach to leads. Charges will apply.'}
               </p>
               {isMock && status.warning && (
                 <p className="text-xs mt-2 text-amber-700">{status.warning}</p>
@@ -96,7 +96,7 @@ function TelephonySettings() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            Twilio stays in test mode until every item below is configured. The system will not place real calls until all secrets are present.
+            Telnyx calling stays disabled until configuration and end-to-end checks pass.
           </p>
           <div className="space-y-2">
             {status.checklist?.map(item => (
@@ -116,10 +116,10 @@ function TelephonySettings() {
           <div className="mt-4 p-3 rounded-lg bg-muted text-sm">
             <p className="font-medium mb-1">How to go live (when you're ready):</p>
             <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-              <li>Add the missing secrets above (TWILIO_VOICE_TWIML_URL, callback URLs, signing secret).</li>
-              <li>Configure your TwiML application and webhook URLs in Twilio Console.</li>
-              <li>Return here and refresh — the mode will switch to Production automatically.</li>
-              <li>To turn it off again, remove any of the missing secrets and the system reverts to test mode.</li>
+              <li>Store the Telnyx API key in backend Secret Manager and configure the connection ID, public signing key and webhook URL.</li>
+              <li>Assign the client number and agent credentials, then verify server-controlled caller ID and recording consent.</li>
+              <li>Run the authorized audio and CRM evidence test before explicitly enabling production calling.</li>
+              <li>The backend activation flag can disable calling without deleting credentials.</li>
             </ol>
           </div>
         </CardContent>

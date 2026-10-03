@@ -10,18 +10,6 @@ export function placeBrowserCall(options) {
 // One provider is instantiated per authenticated agent session. Tokens stay in
 // memory; provider account credentials never enter the frontend.
 export async function createBrowserClient(session, {onIncoming, onState, onError, audio}) {
-  if (session.provider === 'twilio') {
-    const {Device} = await import('@twilio/voice-sdk');
-    const client = new Device(session.token);
-    client.on('error', onError);
-    client.on('incoming', call => onIncoming({
-      accept: () => call.accept(), reject: () => call.reject(),
-      end: () => call.disconnect(), mute: value => call.mute(value),
-    }));
-    client.on('registered', () => onState('available'));
-    client.on('unregistered', () => onState('offline'));
-    return {connect: () => client.register(), disconnect: () => client.destroy()};
-  }
   if (session.provider === 'telnyx') {
     const {TelnyxRTC} = await import('@telnyx/webrtc');
     const client = new TelnyxRTC({login_token: session.token});
@@ -52,31 +40,6 @@ export async function createBrowserClient(session, {onIncoming, onState, onError
       updates.set(call.id, report); report(call);
       return {id: call.id, end: () => call.hangup(), hold: value => value ? call.hold() : call.unhold()};
     }};
-  }
-  if (session.provider === 'signalwire') {
-    const {SignalWire, StaticCredentialProvider} = await import('@signalwire/js');
-    const client = new SignalWire(new StaticCredentialProvider({token:session.token}));
-    return {
-      connect: async () => {
-        await client.connect();
-        await client.register();
-        client.session.incomingCalls$.subscribe(calls => {
-          const call=calls.find(value=>value.status==='ringing');
-          if (!call) {onIncoming(null);return;}
-          onIncoming({
-            accept: () => {
-              call.remoteStream$.subscribe(stream=>{if(stream) audio.srcObject=stream;});
-              call.status$.subscribe(onState);
-              return call.answer({audio:true,video:false});
-            },
-            reject: () => call.reject(),
-            end: () => call.hangup(),
-          });
-        });
-        onState('available');
-      },
-      disconnect: () => client.disconnect(),
-    };
   }
   throw new Error('Calling is not configured.');
 }

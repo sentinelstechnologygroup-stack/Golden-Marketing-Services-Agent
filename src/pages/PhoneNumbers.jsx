@@ -71,7 +71,7 @@ export default function PhoneNumbers() {
 
 function NumberDialog({ brands, onClose, onSaved }) {
   const { toast } = useToast();
-  const [form, setForm] = useState({ brand_id: brands[0]?.id || '', phone_number: '', number_type: 'local', caller_id_name: '', provider: 'twilio', recording_policy: 'record_on_consent', status: 'active' });
+  const [form, setForm] = useState({ brand_id: brands[0]?.id || '', phone_number: '', number_type: 'local', caller_id_name: '', provider: 'telnyx', recording_policy: 'record_on_consent', status: 'active' });
   const [saving, setSaving] = useState(false);
   const submit = async (e) => {
     e.preventDefault();
@@ -91,7 +91,7 @@ function NumberDialog({ brands, onClose, onSaved }) {
         <div><Label>Phone number *</Label><Input value={form.phone_number} onChange={e => setForm({...form, phone_number: e.target.value})} placeholder="+1XXXXXXXXXX" /></div>
         <div className="grid grid-cols-2 gap-4">
           <div><Label>Type</Label><select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={form.number_type} onChange={e => setForm({...form, number_type: e.target.value})}><option value="local">Local</option><option value="toll_free">Toll-free</option><option value="ported">Ported</option></select></div>
-          <div><Label>Provider</Label><select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={form.provider} onChange={e => setForm({...form, provider: e.target.value})}><option value="twilio">Twilio</option><option value="ooma">Ooma</option><option value="other">Other</option></select></div>
+          <div><Label>Provider</Label><select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={form.provider} onChange={e => setForm({...form, provider: e.target.value})}><option value="telnyx">Telnyx</option></select></div>
         </div>
         <div><Label>Caller ID name</Label><Input value={form.caller_id_name} onChange={e => setForm({...form, caller_id_name: e.target.value})} /></div>
         <div><Label>Recording policy</Label><select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={form.recording_policy} onChange={e => setForm({...form, recording_policy: e.target.value})}><option value="record_all">Record all</option><option value="record_on_consent">Record on consent</option><option value="do_not_record">Do not record</option></select></div>

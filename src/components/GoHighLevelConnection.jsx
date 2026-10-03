@@ -11,7 +11,7 @@ export default function GoHighLevelConnection({ tenantId, locationId, disabled, 
     try {
       await invoke('connectExistingGoHighLevelLocation', { tenantId, locationId });
       const checked = await invoke('verifyGoHighLevelConnection', { tenantId });
-      setMessage(`GoHighLevel connected: ${checked.verifiedResources.join(', ')}. Twilio verification remains separate.`);
+      setMessage(`GoHighLevel connected: ${checked.verifiedResources.join(', ')}. Telnyx verification remains separate.`);
       await onVerified?.();
     } catch (error) { setMessage(error.message); }
     finally { setBusy(false); }
