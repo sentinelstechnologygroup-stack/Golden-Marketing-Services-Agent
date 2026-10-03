@@ -1,7 +1,13 @@
 # Link Marketing Solutions — API & Webhooks Contract
 
-> Single source of truth for all workspace, lead, routing, telephony, and webhook behavior.
+> Historical UI transport design. Production Firebase callable functions take precedence over the proposed REST paths below.
 > The UI must never assume ownership scope — it relies on API filters and authorization responses.
+
+## Current production phone service
+
+The Agent Portal calls the authenticated Firebase `communications` callable with an action and tenant context. Telnyx is the only supported phone provider. `health_check` reports `production` only after activation and complete configuration checks; otherwise it reports `unavailable`. Disabled calling creates no mock calls.
+
+Signed Telnyx events use the deployed `telnyxWebhook` function at `https://telnyxwebhook-l34bporbca-uc.a.run.app`. The proposed `/webhooks/telnyx/*` paths below are not deployed endpoints. API credentials stay in Google Secret Manager; the browser receives only its short-lived telephony token. Caller identity comes from the authorized lead's Brand/campaign number. Provider-side restrictions must be verified before enabling browser calling. Recording follows the stored consent policy, and warm transfer remains separately gated pending an end-to-end conference test.
 
 ## Transport & Security
 
