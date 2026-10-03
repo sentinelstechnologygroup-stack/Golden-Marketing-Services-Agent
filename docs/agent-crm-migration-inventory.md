@@ -1,3 +1,7 @@
+# Current GMS ownership — 2026-10-03
+
+The live GMS CRM uses dedicated project gms-prod-1089114348316. See gms-ownership-isolation.md for the current preservation checklist. The original migration inventory below describes the historical starting point.
+
 # Agent CRM Migration Inventory
 
 ## Scope and status
