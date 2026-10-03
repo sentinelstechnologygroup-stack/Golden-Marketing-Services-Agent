@@ -123,3 +123,20 @@ success states. See docs/client-onboarding.md for the implementation boundaries.
 - Staging credentials/configuration and Twilio test resources, if telephony is in pilot scope.
 
 Do not enter real customer or lead data into Preview while these controls are absent. The current Preview login bypass is for UI review only.
+
+
+## Three-provider telephony development — 2026-10-02
+
+Provider-neutral portal controls and lazy browser adapters added for Twilio,
+Telnyx and SignalWire. Backend preserves existing tenant/brand/lead/contact
+contracts and adds authenticated agent sessions, transactional lead acceptance,
+conference participant controls, consultation/complete/cancel handoff commands,
+SMS consent checks and signed deduplicated call callbacks. Provider names are
+removed from the agent call controls. Calling remains explicitly disabled until
+the server TELEPHONY_ENABLED gate is activated.
+
+Parity is incomplete: account-specific browser-to-conference linkage, inbound
+shared call dispatch/requeue, voicemail, message callbacks, token refresh,
+transcription and GHL evidence sync need implementation and live verification.
+The new backend telephony README records configuration and these activation
+blockers. Do not report SDK compilation as live phone-system acceptance.
