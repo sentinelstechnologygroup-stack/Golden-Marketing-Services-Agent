@@ -9,7 +9,7 @@ export default function GoHighLevelLeadConversation({ leadId }) {
   const [contactId, setContactId] = useState('');
   useEffect(() => {
     let active = true;
-    firebaseClient.auth.me().then(profile => { if (active) setCanLink(import.meta.env.VITE_GMS_CONTACT_LINKING_ENABLED === 'true' && profile.lmsSuperAdmin === true); }).catch(() => {});
+    firebaseClient.auth.me().then(profile => { if (active) setCanLink(import.meta.env.VITE_GMS_CONTACT_LINKING_ENABLED === 'true' && profile.gmsSuperAdmin === true); }).catch(() => {});
     return () => { active = false; };
   }, []);
   async function link(event) {

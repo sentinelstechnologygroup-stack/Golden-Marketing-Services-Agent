@@ -3,7 +3,7 @@ import { useAuth } from '@/lib/AuthContext';
 
 export default function AdminPortal() {
   const { user } = useAuth();
-  const superAdmin = ['super_admin', 'lms_super_admin'].includes(user?.role);
+  const superAdmin = ['super_admin', 'gms_super_admin'].includes(user?.role);
   const links = [
     ...(superAdmin ? [['/clients', 'Clients', 'Client directory, unified onboarding, connections, campaign approvals and shared files.']] : []),
     ['/brands', 'Brands', 'View client brand configuration.'], ['/campaigns', 'Campaigns', 'Review programs and campaign activity.'],

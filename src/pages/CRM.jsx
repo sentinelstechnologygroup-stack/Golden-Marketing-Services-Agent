@@ -3,7 +3,7 @@ import GoHighLevelConnection from '@/components/GoHighLevelConnection';
 
 export default function CRM() {
   const { user } = useAuth();
-  const isSuperAdmin = user?.lmsSuperAdmin === true;
+  const isSuperAdmin = user?.gmsSuperAdmin === true;
   return <div className="space-y-6">
     <header><h1 className="font-heading text-3xl">GMS CRM</h1><p className="mt-2 text-muted-foreground">Live CRM resources inside your GMS workspace. Client data remains in its own connected account.</p></header>
     <GoHighLevelConnection key={user?.organization_id} tenantId={user?.organization_id} workspace />

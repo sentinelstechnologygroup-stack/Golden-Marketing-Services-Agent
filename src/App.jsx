@@ -42,7 +42,7 @@ function AdminPortalRoute() {
 }
 function ClientsRoute() {
   const { user } = useAuth();
-  return ['super_admin', 'lms_super_admin'].includes(user?.role) ? <Clients /> : <Navigate to='/' replace />;
+  return ['super_admin', 'gms_super_admin'].includes(user?.role) ? <Clients /> : <Navigate to='/' replace />;
 }
 
 const AuthenticatedApp = () => {

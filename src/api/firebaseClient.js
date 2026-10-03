@@ -9,12 +9,12 @@ const env = (name) => import.meta.env?.[name] || '';
 // Public Firebase web configuration for the existing production backend.
 // Vercel variables still override these values when configured.
 const DEFAULT_FIREBASE_CONFIG = {
-  apiKey: 'AIzaSyAHNMYWtu7RkVe0apq94oB271_sXvIIWXE',
-  authDomain: 'linkmarketing-agent-portal-crm.firebaseapp.com',
-  projectId: 'linkmarketing-agent-portal-crm',
-  storageBucket: 'linkmarketing-agent-portal-crm.firebasestorage.app',
-  messagingSenderId: '1089114348316',
-  appId: '1:1089114348316:web:8df2b05d88d1df8cc778d9',
+  apiKey: 'AIzaSyA9qG9fo-PtTjSCNU8nH6H3JFfOB8uoSWc',
+  authDomain: 'gms-prod-1089114348316.firebaseapp.com',
+  projectId: 'gms-prod-1089114348316',
+  storageBucket: 'gms-prod-1089114348316.firebasestorage.app',
+  messagingSenderId: '852174491354',
+  appId: '1:852174491354:web:4d7468295ba977987b5fe3',
 };
 const firebaseConfig = {
   apiKey: env('VITE_FIREBASE_AGENT_CRM_API_KEY') || env('VITE_FIREBASE_CUSTOMER_PORTAL_API_KEY') || DEFAULT_FIREBASE_CONFIG.apiKey,
@@ -48,19 +48,17 @@ const ENTITY_COLLECTIONS = {
   Report: 'reports', AuditLog: 'auditLogs', User: 'members',
   Notification: 'notifications',
 };
-const roleMap = { admin: 'super_admin', lms_super_admin: 'super_admin', supervisor: 'supervisor', agent: 'lead_response_agent', auditor: 'auditor' };
+const roleMap = { admin: 'super_admin', gms_super_admin: 'super_admin', supervisor: 'supervisor', agent: 'lead_response_agent', auditor: 'auditor' };
 const agentRoles = new Set(['super_admin', 'supervisor', 'lead_response_agent', 'auditor']);
 const ACTIVE_TENANT_KEY = 'gms-agent-active-tenant';
-const LEGACY_ACTIVE_TENANT_KEY = 'lms-agent-active-tenant';
 const getTenantId = () => profile?.organization_id || null;
 
 function selectAssignment(assignments) {
   const activeAssignments = (assignments || []).filter((item) => item.status === 'active' && item.tenantStatus !== 'disabled');
-  const storedTenantId = window.localStorage.getItem(ACTIVE_TENANT_KEY) || window.localStorage.getItem(LEGACY_ACTIVE_TENANT_KEY);
+  const storedTenantId = window.localStorage.getItem(ACTIVE_TENANT_KEY);
   const selected = activeAssignments.find((item) => item.tenantId === storedTenantId) || activeAssignments[0] || null;
   if (selected?.tenantId) {
     window.localStorage.setItem(ACTIVE_TENANT_KEY, selected.tenantId);
-    window.localStorage.removeItem(LEGACY_ACTIVE_TENANT_KEY);
   }
   return { activeAssignments, selected };
 }
@@ -97,7 +95,7 @@ async function getProfile() {
   const token = await auth.currentUser?.getIdTokenResult();
   const { activeAssignments, selected } = selectAssignment(raw.agentAssignments);
   const assignmentRole = roleMap[selected?.role] || selected?.role;
-  const claimedRole = raw.lmsSuperAdmin ? 'super_admin' : roleMap[token?.claims?.role] || token?.claims?.role || assignmentRole;
+  const claimedRole = raw.gmsSuperAdmin ? 'super_admin' : roleMap[token?.claims?.role] || token?.claims?.role || assignmentRole;
   if (!agentRoles.has(claimedRole)) {
     throw Object.assign(new Error('This account is not authorized for the Agent CRM.'), { status: 403 });
   }
