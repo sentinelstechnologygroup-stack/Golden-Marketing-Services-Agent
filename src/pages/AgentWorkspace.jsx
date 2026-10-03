@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import AgentPhoneConnection from '@/components/AgentPhoneConnection';
+import { placeBrowserCall } from '@/lib/telephony/browserClient';
 import { EmptyDataTable } from '@/components/CollectionStructure';
 import { api, ApiError } from '@/lib/apiClient';
 import { useAuth } from '@/lib/AuthContext';
@@ -59,6 +61,8 @@ export default function AgentWorkspace() {
           <TenantBadge tenant={data.tenant} />
         </div>
       </div>
+
+      <AgentPhoneConnection user={user} />
 
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <StatCard label="New Leads" value={data.new_leads.count} icon={AlertCircle} accent="bg-blue-50 text-blue-600" />
@@ -123,6 +127,17 @@ function LeadContextPanel({ leadId, onSaved }) {
   const [callLoading, setCallLoading] = useState(false);
   const [telephony, setTelephony] = useState(null);
   const [recordingConsent, setRecordingConsent] = useState(false);
+  const [transferStatus, setTransferStatus] = useState(null);
+  const [controlError, setControlError] = useState(null);
+  const [controlBusy, setControlBusy] = useState(false);
+  const control = async (action) => {
+    setControlBusy(true); setControlError(null);
+    try { return await action(); } catch (error) { setControlError(error.message); return null; } finally { setControlBusy(false); }
+  };
+  const transfer = async (action) => {
+    const result = await control(() => api.telephonyAction(user, action, {callId:call.callId}));
+    if (result) setTransferStatus(result.status);
+  };
 
   const load = async () => {
     setLoading(true); setError(null);
@@ -137,15 +152,34 @@ function LeadContextPanel({ leadId, onSaved }) {
     api.getTelephonyStatus(user).then(setTelephony).catch(() => setTelephony({ mode: 'unavailable', healthy: false, warning: 'Telephony status could not be verified. Calls are disabled until the CRM backend is connected.' }));
   }, [leadId]);
 
+  useEffect(() => {
+    if (!call?.callId) return;
+    let active = true;
+    const timer = setInterval(async () => {
+      try {
+        const status = await api.telephonyAction(user, 'call_status', {callId:call.callId});
+        if (active) {setCall(value => ({...value,...status})); if(status.transferStatus) setTransferStatus(status.transferStatus);}
+      } catch { /* Retain last confirmed state; controls report operation errors. */ }
+    }, 3000);
+    return () => {active=false;clearInterval(timer);};
+  }, [call?.callId, user]);
+
   const startCall = async () => {
     if (!ctx?.lead?.phone) return;
     setCallLoading(true);
     try {
+      await api.telephonyAction(user, 'claim_lead', {leadId});
       const result = await api.postCall(user, { lead_id: leadId, to: ctx.lead.phone, recording_consent: recordingConsent });
-      setCall(result);
+      if (result.dial) {
+        const browserCall = placeBrowserCall({...result.dial, onUpdate: update => {
+          setCall(value => value ? {...value, browserState:update.state} : value);
+          if (update.providerCallId) api.telephonyAction(user, 'bind_call', {callId:result.callId, ...update}).catch(() => {});
+        }});
+        setCall({...result, browserCallId:browserCall.id});
+      } else setCall(result);
       toast({
         title: result.mode === 'mock' ? 'Test call started' : 'Call started',
-        description: result.mode === 'mock' ? 'Mock mode — no real call was placed.' : 'The call is now being handled by Twilio.'
+        description: result.mode === 'mock' ? 'Mock mode — no real call was placed.' : 'The phone service accepted the call request.'
       });
     } catch (e) {
       toast({ title: 'Call could not start', description: e.message, variant: 'destructive' });
@@ -155,7 +189,7 @@ function LeadContextPanel({ leadId, onSaved }) {
   const endCall = async () => {
     if (!call?.callId) return;
     const result = await api.endCall(user, call.callId);
-    setCall({ ...call, ...result, status: result.status || 'completed' });
+    setCall({ ...call, ...result, status: result.status || 'ending' });
   };
 
   const toggleHold = async () => {
@@ -239,7 +273,7 @@ function LeadContextPanel({ leadId, onSaved }) {
           <CardTitle className="text-sm flex items-center justify-between">
             <span className="flex items-center gap-2"><PhoneCall className="h-4 w-4" /> CRM calling</span>
             <Badge variant="outline" className={telephony?.mode === 'production' ? 'text-emerald-700' : telephony?.mode === 'unavailable' ? 'border-rose-300 bg-rose-100 text-rose-800' : 'text-amber-700'}>
-              {telephony?.mode === 'production' ? 'Twilio live' : telephony?.mode === 'unavailable' ? 'Unavailable' : 'Test mode'}
+              {telephony?.mode === 'production' ? 'Calling enabled' : telephony?.mode === 'unavailable' ? 'Unavailable' : 'Test mode'}
             </Badge>
           </CardTitle>
         </CardHeader>
@@ -255,19 +289,22 @@ function LeadContextPanel({ leadId, onSaved }) {
           {call ? (
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline">{call.status || 'in_progress'}</Badge>
-              <Button size="sm" variant="outline" onClick={toggleHold}>
+              <Button size="sm" variant="outline" disabled={controlBusy} onClick={() => control(toggleHold)}>
                 {call.status === 'on_hold' ? <Play className="h-3.5 w-3.5 mr-1" /> : <Pause className="h-3.5 w-3.5 mr-1" />}
                 {call.status === 'on_hold' ? 'Resume' : 'Hold'}
               </Button>
-              <Button size="sm" variant="destructive" onClick={endCall}><PhoneOff className="h-3.5 w-3.5 mr-1" />End call</Button>
-              <Button size="sm" variant="outline" onClick={() => toast({ title: 'Warm transfer ready', description: 'Select a destination after the live Flex workspace is connected.' })}><ArrowRightLeft className="h-3.5 w-3.5 mr-1" />Warm transfer</Button>
+              <Button size="sm" variant="destructive" disabled={controlBusy} onClick={() => control(endCall)}><PhoneOff className="h-3.5 w-3.5 mr-1" />End call</Button>
+              <Button size="sm" variant="outline" disabled={controlBusy || transferStatus === 'consulting'} onClick={() => transfer('start_consultation')}><ArrowRightLeft className="h-3.5 w-3.5 mr-1" />Consult customer</Button>
+              {transferStatus === 'consulting' && <><Button size="sm" disabled={controlBusy} onClick={() => transfer('complete_transfer')}>Complete handoff</Button><Button size="sm" variant="outline" disabled={controlBusy} onClick={() => transfer('cancel_transfer')}>Cancel handoff</Button></>}
+              {transferStatus && <Badge variant="outline">{transferStatus.replace(/_/g, ' ')}</Badge>}
             </div>
           ) : (
-            <Button onClick={startCall} disabled={callLoading || !lead.phone || telephony?.mode === 'unavailable'}>
+            <Button onClick={startCall} disabled={callLoading || !lead.phone || telephony?.mode !== 'production'}>
               <PhoneCall className="h-4 w-4 mr-2" />{callLoading ? 'Starting…' : 'Call ' + lead.first_name}
             </Button>
           )}
-          <p className="text-xs text-muted-foreground">{telephony?.mode === 'production' ? 'Calls are routed through Twilio. Recording and webhook status will attach to this lead.' : telephony?.mode === 'unavailable' ? telephony.warning : 'Test mode is active. No real call is placed until the Twilio secret store is configured.'}</p>
+          {controlError && <p role="alert" className="text-sm text-destructive">{controlError}</p>}
+          <p className="text-xs text-muted-foreground">{telephony?.mode === 'production' ? 'Call activity and recording status attach to this lead.' : telephony?.mode === 'unavailable' ? telephony.warning : 'Calling is awaiting configuration. No real call will be placed.'}</p>
         </CardContent>
       </Card>
 
@@ -308,6 +345,5 @@ function StatCard({ label, value, icon: Icon, accent }) {
 }
 
 function Spinner() { return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" /></div>; }
-
 
 
