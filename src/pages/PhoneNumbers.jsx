@@ -52,13 +52,13 @@ export default function PhoneNumbers() {
         {numbers.map(n => (
             <Card key={n.id}><CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div><p className="font-mono font-medium">{n.phone_number}</p><p className="text-xs text-muted-foreground">{brandMap[n.brand_id]?.display_name} · {n.number_type} · {n.provider}</p></div>
+                <div><p className="font-mono font-medium">{n.phone_number || n.phoneNumber}</p><p className="text-xs text-muted-foreground">{brandMap[n.brand_id || n.brandId]?.display_name || brandMap[n.brand_id || n.brandId]?.name} · {n.number_type || 'Type not configured'} · {n.provider}</p></div>
                 <Badge variant={n.status === 'active' ? 'default' : 'secondary'}>{n.status}</Badge>
               </div>
               <div className="mt-2 text-xs text-muted-foreground space-y-0.5">
                 {n.caller_id_name && <p>Caller ID: {n.caller_id_name}</p>}
-                <p>Recording: {n.recording_policy.replace(/_/g, ' ')}</p>
-                <p>Reputation: {n.reputation_status}</p>
+                <p>Recording: {typeof (n.recording_policy || n.recordingPolicy) === 'string' ? (n.recording_policy || n.recordingPolicy).replace(/_/g, ' ') : 'Not configured'}</p>
+                <p>Reputation: {n.reputation_status || 'Not verified'}</p>
               </div>
             </CardContent></Card>
           ))}
