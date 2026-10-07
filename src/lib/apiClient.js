@@ -130,7 +130,7 @@ export const api = {
         (l.email || '').toLowerCase().includes(q) ||
         (l.phone || '').includes(q));
     }
-    items.sort((a, b) => new Date(a.receivedAt || a.created_date) - new Date(b.receivedAt || b.created_date) || String(a.id).localeCompare(String(b.id)));
+    items.sort((a, b) => new Date(a.received_date || a.created_date) - new Date(b.received_date || b.created_date) || String(a.id).localeCompare(String(b.id)));
     return listResponse(user, items);
   }),
 
