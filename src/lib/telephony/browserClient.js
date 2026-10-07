@@ -32,13 +32,8 @@ export async function createBrowserClient(session, {onIncoming, onState, onError
       client.on('telnyx.error',error=>{clearTimeout(timer);reject(error);});
       client.connect();
     }), disconnect: () => client.disconnect(), placeCall: ({to, from, clientState, onUpdate}) => {
-      const call = client.newCall({destinationNumber: to, callerNumber: from, clientState, remoteElement: audio});
-      const report = value => {
-        onUpdate?.({state:value.state,browserCallId:value.id,providerCallId:value.telnyxCallControlId || null,providerSessionId:value.telnyxSessionId || null,providerLegId:value.telnyxLegId || null});
-        if (['hangup','destroy','purge'].includes(value.state)) updates.delete(value.id);
-      };
-      updates.set(call.id, report); report(call);
-      return {id: call.id, end: () => call.hangup(), hold: value => value ? call.hold() : call.unhold()};
+      void to; void from; void clientState; void onUpdate;
+      throw new Error('Outbound calls must be started by the CRM backend.');
     }};
   }
   throw new Error('Calling is not configured.');

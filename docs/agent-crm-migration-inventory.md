@@ -154,3 +154,17 @@ only for the portal origin. Existing historical call records and demo layouts
 are preserved. Recording, signed status events, call controls and tenant/campaign
 number selection retain their existing gated workflow. Calling and warm transfer
 remain disabled pending account provisioning and live media acceptance.
+
+## October 6 server-controlled calling and OAuth increment
+
+Local browser direct dialing is blocked. The backend calls the provisioned
+agent SIP identity first and starts the lead leg only after a signed answered
+event, using the server-selected client number. Existing incoming-call answer,
+decline and phone controls remain. Live provider rejection of direct outbound
+SDK calling, audio, hold/resume and recording acceptance remain unverified.
+
+Client configuration adds an authorization action while preserving existing
+connection verification and resource views. The backend creates single-use
+state tied to the saved client/location and fresh GMS administrator. OAuth
+credentials remain in GMS Secret Manager. This frontend increment is not yet
+deployed or accepted end to end; production calling remains disabled.

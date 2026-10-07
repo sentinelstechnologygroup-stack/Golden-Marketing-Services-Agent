@@ -6,6 +6,15 @@ export default function GoHighLevelConnection({ tenantId, locationId, disabled, 
   const [message, setMessage] = useState('');
   const [result, setResult] = useState(null);
   const invoke = firebaseClient.clients.invoke;
+  async function authorize() {
+    setBusy(true); setMessage('');
+    try {
+      const authorization = await invoke('beginGmsCrmAuthorization', { tenantId, locationId });
+      const target = new URL(authorization.url);
+      if (target.protocol !== 'https:' || !['marketplace.gohighlevel.com', 'marketplace.leadconnectorhq.com'].includes(target.hostname)) throw new Error('Authorization destination is unavailable.');
+      window.location.assign(target.toString());
+    } catch (error) { setMessage(error.message); setBusy(false); }
+  }
   async function verify() {
     setBusy(true); setMessage(''); setResult(null);
     try {
@@ -27,6 +36,7 @@ export default function GoHighLevelConnection({ tenantId, locationId, disabled, 
     <p className="text-sm">{internal ? 'Internal administration connection, not a customer account. Client work remains isolated in each client location.' : 'Reads the saved client sub-account through the secured GMS backend.'} No calls or messages are sent.</p>
     <div className="flex flex-wrap gap-2">
       {!workspace && <button type="button" disabled={disabled || busy || !locationId} onClick={verify} className="rounded-lg bg-[#001922] px-4 py-2 text-white disabled:opacity-50">{busy ? 'Working…' : 'Verify saved connection'}</button>}
+      {!workspace && !internal && <button type="button" disabled={disabled || busy || !locationId} onClick={authorize} className="rounded-lg border px-4 py-2 disabled:opacity-50">Authorize client connection</button>}
       {['conversations', 'calendars', 'opportunities', 'pipelines', 'workflows', 'forms', 'campaigns'].map(resource => <button key={resource} type="button" disabled={disabled || busy || (!workspace && !locationId)} onClick={() => read(resource)} className="rounded-lg border px-3 py-2 capitalize disabled:opacity-50">View {resource}</button>)}
     </div>
     {disabled && <p className="text-xs">Save the draft before checking the connection.</p>}
