@@ -109,12 +109,15 @@ export default function Leads() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-medium truncate">{lead.first_name} {lead.last_name || ''}</p>
+                      <p className="text-xs text-muted-foreground">{campaigns.find(c => c.id === (lead.campaign_id || lead.campaignId))?.name || campaigns.find(c => c.id === (lead.campaign_id || lead.campaignId))?.display_name || lead.campaign_id || lead.campaignId}</p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <BrandChip brand={brandMap[lead.brand_id]} />
                         <span className="text-xs text-muted-foreground truncate">{lead.phone || lead.email || '—'}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap justify-end">
+                      {lead.isTest && <Badge variant="outline">Test lead</Badge>}
+                      {lead.contactVerification && <><Badge variant="outline">Email: {lead.contactVerification.email?.status || 'pending'}</Badge><Badge variant="outline">SMS: {lead.contactVerification.sms?.status || 'pending'}</Badge></>}
                       <Badge className="bg-slate-900 text-white border-0">{lifecycleLabel(lifecycle)}</Badge>
                       <Badge className={lead.verification_status === 'verified' ? 'bg-emerald-100 text-emerald-700 border-0' : 'bg-amber-100 text-amber-700 border-0'}>
                         {verificationLabel(lead)}
