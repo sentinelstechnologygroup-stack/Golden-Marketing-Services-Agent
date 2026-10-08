@@ -23,7 +23,7 @@ const STATUS_COLORS = {
   unqualified: 'bg-rose-100 text-rose-700', closed: 'bg-slate-100 text-slate-700', lost: 'bg-rose-100 text-rose-700',
 };
 
-export default function LeadDetail({leadId, embedded = false}) {
+export default function LeadDetail({leadId, embedded = false, onSaved}) {
   const { id: routeId } = useParams();
   const id = leadId || routeId;
   const navigate = useNavigate();
@@ -156,6 +156,10 @@ export default function LeadDetail({leadId, embedded = false}) {
         lifecycle_stage: lifecycleStage,
         handoff_status: lifecycleStage === 'qualified_handoff' ? 'ready' : (lead.handoff_status || 'not_ready'),
       });
+      if (['attempted','no_answer','voicemail_left','follow_up_required'].includes(disposition) && !tasks.some(task => task.status==='pending' && task.task_type==='callback_reminder')) {
+        await firebaseClient.entities.FollowUpTask.create({organization_id:lead.organization_id,brand_id:lead.brand_id,lead_id:lead.id,assigned_to:user.id,status:'pending',task_type:'callback_reminder',due_date:now,priority:lead.priority || 3,title:'Return call required',notes:nextAction || 'Follow up after an unsuccessful contact attempt.'});
+      }
+      onSaved?.();
       toast({ title: 'Call record saved', description: `Disposition: ${disposition.replace(/_/g, ' ')}` });
       setCallNotes('');
       setNextAction('');

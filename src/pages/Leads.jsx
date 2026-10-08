@@ -64,7 +64,7 @@ export default function Leads() {
           <h1 className="text-2xl font-heading font-semibold tracking-tight">Qualification Gate Inbox</h1>
           <p className="text-muted-foreground text-sm mt-1">Inquiry → verification → qualification → contact → handoff → outcome</p>
         </div>
-        <Button onClick={() => setShowCreate(true)}><Plus className="h-4 w-4 mr-2" /> New Lead</Button>
+        {['super_admin','gms_super_admin','admin'].includes(user?.role) && <Button onClick={() => setShowCreate(true)}><Plus className="h-4 w-4 mr-2" /> New Lead</Button>}
       </div>
 
       {data && <TenantBadge tenant={data.tenant} />}

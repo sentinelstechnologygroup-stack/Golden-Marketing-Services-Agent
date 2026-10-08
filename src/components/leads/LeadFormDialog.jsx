@@ -43,12 +43,19 @@ export default function LeadFormDialog({ open, onClose, brands, campaigns, onSav
     setSaving(true);
     try {
       const brand = brandOptions.find(b => b.id === form.brand_id);
+      let sourceId = lead?.source_id;
+      if (!isEdit) {
+        const sources = await firebaseClient.entities.LeadSource.filter({brand_id:form.brand_id,type:'manual'},'-created_date',1);
+        const source = sources[0] || await firebaseClient.entities.LeadSource.create({name:'Administrator manual lead entry',type:'manual',status:'active',brand_id:form.brand_id,organization_id:brand?.organization_id || user?.organization_id});
+        sourceId=source.id;
+      }
       const payload = {
         ...form,
         organization_id: brand?.organization_id || user?.organization_id,
         consent_recorded: lead?.consent_recorded || false,
         consent_language_version: lead?.consent_language_version || brand?.consent_language_version || '1.0',
         ...(isEdit ? {} : {
+          status:'new', lead_status:'new', source_id:sourceId, assigned_to:user.id, contact_attempts:0,
           verification_status: 'pending',
           verification_method: 'sms',
           lifecycle_stage: 'inquiry',

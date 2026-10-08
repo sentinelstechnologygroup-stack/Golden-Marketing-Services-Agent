@@ -33,8 +33,8 @@ export default function AgentWorkspace() {
   const [selectedLeadId, setSelectedLeadId] = useState(searchParams.get('leadId'));
   useEffect(() => { if (searchParams.get('leadId')) setSelectedLeadId(searchParams.get('leadId')); }, [searchParams]);
 
-  const load = async () => {
-    setLoading(true); setError(null);
+  const load = async (showSpinner = true) => {
+    if(showSpinner) setLoading(true); setError(null);
     try {
       const ws = await api.getAgentWorkspace(user);
       setData(ws);
@@ -75,9 +75,9 @@ export default function AgentWorkspace() {
         <StatCard label="Assigned Brands" value={data.assigned_brands.length} icon={Headphones} accent="bg-emerald-50 text-emerald-600" />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-5">
+      <div className="grid gap-6 md:grid-cols-2">
         {/* Queue list */}
-        <Card className="lg:col-span-2">
+        <Card className="h-full">
           <CardHeader><CardTitle className="text-base">New Leads</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {data.new_leads.count === 0 ? (
@@ -104,10 +104,10 @@ export default function AgentWorkspace() {
           </CardContent>
         </Card>
 
-        {data.reconnect_leads?.count > 0 && <Card className="lg:col-span-2"><CardHeader><CardTitle className="text-base">Previously contacted · call again</CardTitle></CardHeader><CardContent className="space-y-2">{data.reconnect_leads.items.map(lead => <Button key={lead.id} variant="outline" className="w-full justify-start" onClick={() => setSelectedLeadId(lead.id)}>{lead.first_name} {lead.last_name || ''} · {String(lead.lead_status || 'Follow up').replace(/_/g,' ')}</Button>)}</CardContent></Card>}
+        {data.reconnect_leads?.count > 0 && <Card className="h-full"><CardHeader><CardTitle className="text-base">Previously contacted · call again</CardTitle></CardHeader><CardContent className="space-y-2">{data.reconnect_leads.items.map(lead => <Button key={lead.id} variant="outline" className="w-full h-auto min-h-20 justify-start whitespace-normal text-left p-4" onClick={() => setSelectedLeadId(lead.id)}>{lead.first_name} {lead.last_name || ''} · {String(lead.lead_status || 'Follow up').replace(/_/g,' ')}</Button>)}</CardContent></Card>}
 
       </div>
-      <Dialog open={Boolean(selectedLeadId)} onOpenChange={open => {if (!open) {if (hasActivePhoneCall()) {toast({title:'End the active call before closing the lead.'});return;}setSelectedLeadId(null);window.history.replaceState(null,'', '/workspace');}}}><DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto"><DialogTitle>Lead record</DialogTitle>{selectedLeadId && <LeadDetail leadId={selectedLeadId} embedded />}</DialogContent></Dialog>
+      <Dialog open={Boolean(selectedLeadId)} onOpenChange={open => {if (!open) {if (hasActivePhoneCall()) {toast({title:'End the active call before closing the lead.'});return;}setSelectedLeadId(null);window.history.replaceState(null,'', '/workspace');}}}><DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto"><DialogTitle>Lead record</DialogTitle>{selectedLeadId && <LeadDetail leadId={selectedLeadId} embedded onSaved={() => load(false)} />}</DialogContent></Dialog>
     </div>
   );
 }
