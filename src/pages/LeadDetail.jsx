@@ -242,6 +242,7 @@ export default function LeadDetail() {
       </div>
 
       {/* Pre-call context banner */}
+      <Card><CardContent className="p-4 flex items-center justify-between gap-3"><div><p className="font-semibold">Outbound calling</p><p className="text-sm text-muted-foreground">Call this lead again from any status. Calling permissions and opt-out restrictions still apply.</p></div><Button onClick={() => navigate('/workspace?leadId='+encodeURIComponent(id))}><Phone className="h-4 w-4 mr-2" />Call {lead?.first_name || 'lead'}</Button></CardContent></Card>
       <GoHighLevelLeadConversation key={id} leadId={id} />
       <Card className="border-l-4 border-l-primary">
         <CardContent className="p-4 space-y-1">
