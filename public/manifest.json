@@ -2,7 +2,7 @@
   "id": "/",
   "name": "Golden Marketing Services Agent CRM",
   "short_name": "GMS Agent",
-  "start_url": "/login",
+  "start_url": "/workspace",
   "scope": "/",
   "display": "standalone",
   "background_color": "#0B1F33",
@@ -20,5 +20,6 @@
       "type": "image/png",
       "purpose": "any"
     }
-  ]
+  ],
+  "description": "Golden Marketing Services secure agent workspace"
 }

@@ -1,3 +1,4 @@
+import DesktopInstallButton from '@/components/DesktopInstallButton';
 import React from "react";
 import { ShieldCheck } from "lucide-react";
 import BrandMark from "@/components/BrandMark";
@@ -24,6 +25,7 @@ export default function AuthLayout({ title, subtitle, footer, children }) {
           <p className="text-[10px] uppercase tracking-[.2em] mb-2" style={{ color: "var(--teal)" }}>Agent Portal</p>
           <h1 className="font-heading text-[26px] font-semibold leading-tight" style={{ color: "var(--shell)" }}>{title}</h1>
           {subtitle && <p className="mt-2 text-[13.5px]" style={{ color: "var(--muted-ink)" }}>{subtitle}</p>}
+<div className="my-4"><DesktopInstallButton /></div>
           <div className="mt-7">{children}</div>
           {footer && <div className="mt-6 pt-6 border-t text-[12px]" style={{ borderColor: "var(--line)", color: "var(--muted-ink)" }}>{footer}</div>}
           <p className="mt-7 text-[11.5px] leading-5" style={{ color: "var(--muted-ink)" }}>Authorized personnel only. Access attempts and workspace activity may be logged for security and quality assurance.</p>

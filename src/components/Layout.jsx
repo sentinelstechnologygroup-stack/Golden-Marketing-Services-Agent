@@ -1,3 +1,4 @@
+import DesktopInstallButton from '@/components/DesktopInstallButton';
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
@@ -183,7 +184,8 @@ export default function Layout() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {isPreviewAccess && <span className="items-center gap-2 rounded-full border border-rose-300 bg-rose-100 px-3 py-1.5 text-[10px] font-bold text-rose-800 sm:inline-flex">Preview access only</span>}
+            <DesktopInstallButton />
+{isPreviewAccess && <span className="items-center gap-2 rounded-full border border-rose-300 bg-rose-100 px-3 py-1.5 text-[10px] font-bold text-rose-800 sm:inline-flex">Preview access only</span>}
             <button onClick={toggleNotifications} aria-expanded={notificationsOpen} className="relative rounded-lg border border-[#001922]/10 bg-white p-2.5 shadow-sm" aria-label="Notifications">
               <Bell className="h-4 w-4 text-[#334a4d]" />
             </button>
