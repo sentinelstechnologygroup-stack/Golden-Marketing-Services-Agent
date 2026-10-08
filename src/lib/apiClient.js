@@ -200,7 +200,7 @@ export const api = {
       contact_attempts: (lead.contact_attempts || 0) + 1,
       last_contact_date: now,
       next_action: next_action || null,
-      qualification_data,
+      ...(qualification_data === null ? {} : {qualification_data}),
     });
     return { call, lead: updated };
   }),

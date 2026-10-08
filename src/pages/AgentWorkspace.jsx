@@ -1,3 +1,5 @@
+import QualField from '@/components/leads/QualificationField';
+import { firebaseClient } from '@/api/firebaseClient';
 import React, { useEffect, useState } from 'react';
 import { setRingback } from '@/lib/telephony/ringback';
 import { useSearchParams } from 'react-router-dom';
@@ -66,7 +68,7 @@ export default function AgentWorkspace() {
         </div>
       </div>
 
-      <AgentPhoneConnection user={user} />
+
 
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <StatCard label="New Leads" value={data.new_leads.count} icon={AlertCircle} accent="bg-blue-50 text-blue-600" />
@@ -131,6 +133,7 @@ function LeadContextPanel({ leadId, onSaved }) {
   const [call, setCall] = useState(null);
   const [callLoading, setCallLoading] = useState(false);
   const [telephony, setTelephony] = useState(null);
+  const [qualAnswers, setQualAnswers] = useState({});
   const [recordingConsent, setRecordingConsent] = useState(false);
   const [transferStatus, setTransferStatus] = useState(null);
   const [controlError, setControlError] = useState(null);
@@ -149,6 +152,7 @@ function LeadContextPanel({ leadId, onSaved }) {
     try {
       const c = await api.getLead(user, leadId);
       setCtx(c);
+      setQualAnswers(c.lead.qualification_data || {});
       setDisposition(c.lead.disposition || 'attempted');
     } catch (e) { setError(e); } finally { setLoading(false); }
   };
@@ -212,7 +216,7 @@ function LeadContextPanel({ leadId, onSaved }) {
   const save = async () => {
     setSaving(true);
     try {
-      await api.postDisposition(user, leadId, { disposition, notes, next_action: nextAction, provider_mode: call?.mode || telephony?.mode || 'mock' });
+      await api.postDisposition(user, leadId, { disposition, notes, next_action: nextAction, qualification_data: qualAnswers, provider_mode: call?.mode || telephony?.mode || 'mock' });
       toast({ title: 'Disposition saved' });
       setNotes(''); setNextAction('');
       onSaved?.(); load();
@@ -258,26 +262,6 @@ function LeadContextPanel({ leadId, onSaved }) {
         </Card>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader><CardTitle className="text-sm">Required Script</CardTitle></CardHeader>
-          <CardContent className="text-sm space-y-2">
-            {script ? <>
-              <p className="font-medium">{script.name} (v{script.version_number})</p>
-              {script.opening_statement && <div className="p-2 rounded bg-muted">{script.opening_statement}</div>}
-              {script.qualification_questions && <div className="whitespace-pre-wrap text-xs">{script.qualification_questions}</div>}
-              {script.transfer_language && <div className="p-2 rounded bg-muted text-xs">{script.transfer_language}</div>}
-            </> : <EmptyState message="No approved script configured." />}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader><CardTitle className="text-sm">Required Qualification Form</CardTitle></CardHeader>
-          <CardContent className="text-sm">
-            {form ? <><p className="font-medium">{form.name}</p><p className="text-xs text-muted-foreground mt-1">{form.questions?.length || 0} questions · threshold {form.qualification_threshold}</p></> : <EmptyState message="No form configured." />}
-          </CardContent>
-        </Card>
-      </div>
-
       <Card className={telephony?.mode === 'production' ? 'border-emerald-300' : telephony?.mode === 'unavailable' ? 'border-rose-300 bg-rose-50' : 'border-amber-300'}>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center justify-between">
@@ -288,6 +272,7 @@ function LeadContextPanel({ leadId, onSaved }) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          <AgentPhoneConnection user={user} />
           {!call && telephony?.mode === 'production' && recordingPolicy === 'record_on_consent' && (
             <label className="flex items-start gap-2 rounded-md border border-border p-3 text-sm">
               <input type="checkbox" className="mt-1" checked={recordingConsent} onChange={(event) => setRecordingConsent(event.target.checked)} />
@@ -318,6 +303,28 @@ function LeadContextPanel({ leadId, onSaved }) {
           <p className="text-xs text-muted-foreground">{telephony?.mode === 'production' ? 'Call activity and recording status attach to this lead.' : telephony?.mode === 'unavailable' ? telephony.warning : 'Calling is awaiting configuration. No real call will be placed.'}</p>
         </CardContent>
       </Card>
+
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader><CardTitle className="text-sm">Required Script</CardTitle></CardHeader>
+          <CardContent className="text-sm space-y-2">
+            {script ? <>
+              <p className="font-medium">{script.name} (v{script.version_number})</p>
+              {script.opening_statement && <div className="p-2 rounded bg-muted">{script.opening_statement}</div>}
+              {script.qualification_questions && <div className="whitespace-pre-wrap text-xs">{script.qualification_questions}</div>}
+              {script.transfer_language && <div className="p-2 rounded bg-muted text-xs">{script.transfer_language}</div>}
+            </> : <EmptyState message="No approved script configured." />}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle className="text-sm">Required Qualification Form</CardTitle></CardHeader>
+          <CardContent className="text-sm">
+            {form ? <><p className="font-medium">{form.name}</p><p className="text-xs text-muted-foreground mt-1">{form.questions?.length || 0} questions</p><div className="space-y-4 mt-4">{form.questions?.map(q => <QualField key={q.id} q={q} value={qualAnswers[q.id]} onChange={value => setQualAnswers(previous => ({...previous,[q.id]:value}))} />)}</div><Button className="mt-4" onClick={() => control(async () => {await firebaseClient.entities.Lead.update(leadId,{qualification_data:qualAnswers});toast({title:"Qualification answers saved"});})}>Save qualification answers</Button></> : <EmptyState message="No form configured." />}
+          </CardContent>
+        </Card>
+      </div>
+
 
       <Card>
         <CardHeader><CardTitle className="text-sm">Log Disposition</CardTitle></CardHeader>
