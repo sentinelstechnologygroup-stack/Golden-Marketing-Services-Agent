@@ -57,7 +57,7 @@ export default function AgentWorkspace() {
           <p className="text-muted-foreground text-sm mt-1">Unified lead response across all assigned brands</p>
         </div>
         <div className="flex items-center gap-3">
-          <Badge className="bg-emerald-100 text-emerald-700 border-0 capitalize">{data.agent_status.replace(/_/g, ' ')}</Badge>
+          <Badge className="bg-emerald-100 text-emerald-700 border-0 capitalize">{String(data.agent_status || 'offline').replace(/_/g, ' ')}</Badge>
           <TenantBadge tenant={data.tenant} />
         </div>
       </div>
@@ -219,6 +219,7 @@ function LeadContextPanel({ leadId, onSaved }) {
   if (!ctx) return null;
 
   const { lead, brand, campaign, script, form, calls, duplicates, lead_age_minutes } = ctx;
+  const callEnded = ['completed', 'failed', 'canceled', 'cancelled'].includes(call?.status);
   const recordingPolicy = telephony?.recordingPolicy || 'do_not_record';
 
   return (
@@ -289,13 +290,14 @@ function LeadContextPanel({ leadId, onSaved }) {
           {call ? (
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline">{call.status || 'in_progress'}</Badge>
-              <Button size="sm" variant="outline" disabled={controlBusy} onClick={() => control(toggleHold)}>
+              <Button size="sm" variant="outline" disabled={controlBusy || callEnded} onClick={() => control(toggleHold)}>
                 {call.status === 'on_hold' ? <Play className="h-3.5 w-3.5 mr-1" /> : <Pause className="h-3.5 w-3.5 mr-1" />}
                 {call.status === 'on_hold' ? 'Resume' : 'Hold'}
               </Button>
-              <Button size="sm" variant="destructive" disabled={controlBusy} onClick={() => control(endCall)}><PhoneOff className="h-3.5 w-3.5 mr-1" />End call</Button>
-              <Button size="sm" variant="outline" disabled={controlBusy || transferStatus === 'consulting'} onClick={() => transfer('start_consultation')}><ArrowRightLeft className="h-3.5 w-3.5 mr-1" />Consult customer</Button>
+              <Button size="sm" variant="destructive" disabled={controlBusy || callEnded} onClick={() => control(endCall)}><PhoneOff className="h-3.5 w-3.5 mr-1" />End call</Button>
+              <Button size="sm" variant="outline" disabled={controlBusy || callEnded || recordingPolicy === 'do_not_record' || transferStatus === 'consulting'} onClick={() => transfer('start_consultation')}><ArrowRightLeft className="h-3.5 w-3.5 mr-1" />Consult customer</Button>
               {transferStatus === 'consulting' && <><Button size="sm" disabled={controlBusy} onClick={() => transfer('complete_transfer')}>Complete handoff</Button><Button size="sm" variant="outline" disabled={controlBusy} onClick={() => transfer('cancel_transfer')}>Cancel handoff</Button></>}
+              {callEnded && <Button size="sm" onClick={() => {setCall(null);setControlError(null);setTransferStatus(null);}}>New call</Button>}
               {transferStatus && <Badge variant="outline">{transferStatus.replace(/_/g, ' ')}</Badge>}
             </div>
           ) : (
@@ -328,7 +330,7 @@ function LeadContextPanel({ leadId, onSaved }) {
         <CardHeader><CardTitle className="text-sm">Call History</CardTitle></CardHeader>
         <CardContent className="text-sm space-y-2">
           {calls?.length === 0 ? <EmptyState message="No calls yet." /> :
-            calls.map(c => <div key={c.id} className="flex justify-between border border-border rounded p-2"><Badge variant="outline">{c.disposition.replace(/_/g, ' ')}</Badge><span className="text-xs text-muted-foreground">{new Date(c.call_start).toLocaleString()}</span></div>)}
+            calls.map(c => <div key={c.id} className="flex justify-between border border-border rounded p-2"><Badge variant="outline">{String(c.disposition || c.status || 'call').replace(/_/g, ' ')}</Badge><span className="text-xs text-muted-foreground">{new Date(c.call_start).toLocaleString()}</span></div>)}
         </CardContent>
       </Card>
     </div>

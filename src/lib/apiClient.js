@@ -376,7 +376,7 @@ export const api = {
       { ...scopeByOrg(user), status: 'pending' }, 'due_date', 20));
     return listResponse(user, items.map(t => ({
       id: t.id, brand_id: t.brand_id, lead_id: t.lead_id,
-      title: `${t.task_type.replace(/_/g, ' ')} due`, priority: t.priority, due_date: t.due_date
+      title: `${String(t.task_type || t.type || 'Follow up').replace(/_/g, ' ')} due`, priority: t.priority, due_date: t.due_date
     })));
   }),
   ackNotification: (user, { id }) => guard(async () => firebaseClient.entities.FollowUpTask.update(id, { status: 'completed', completion_time: new Date().toISOString() })),

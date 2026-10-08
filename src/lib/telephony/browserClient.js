@@ -24,7 +24,8 @@ export async function createBrowserClient(session, {onIncoming, onState, onError
         accept: () => call.answer(), reject: () => call.hangup(),
         end: () => call.hangup(), mute: value => value ? call.muteAudio() : call.unmuteAudio(),
       });
-      onState(call.state);
+      if (['hangup', 'destroy', 'purge'].includes(call.state)) { onIncoming(null); onState('available'); }
+      else onState(call.state || 'available');
     });
     return {connect: () => new Promise((resolve,reject) => {
       const timer=setTimeout(()=>reject(new Error('Agent calling connection timed out.')),15000);
