@@ -22,6 +22,8 @@ export default function SupervisorWorkspace() {
   useEffect(() => { load(); }, [user]);
   useEffect(() => {const timer=setInterval(load,30000);return()=>clearInterval(timer);},[user]);
 
+  useEffect(() => {let active=true;const timer=setInterval(()=>api.getSupervisorWorkspace(user).then(value=>{if(active)setData(value);}).catch(()=>{}),30000);return()=>{active=false;clearInterval(timer);};},[user]);
+
   if (loading) return <Spinner />;
   if (error) return error instanceof ApiError && (error.status === 401 || error.status === 403)
     ? <AuthError error={error} onRetry={load} /> : <ErrorState error={error} onRetry={load} />;

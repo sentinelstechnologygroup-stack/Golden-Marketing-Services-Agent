@@ -65,7 +65,6 @@ export default function AgentWorkspace() {
           <p className="text-muted-foreground text-sm mt-1">Unified lead response across all assigned brands</p>
         </div>
         <div className="flex items-center gap-3">
-          <Badge className="bg-emerald-100 text-emerald-700 border-0 capitalize">{String(data.agent_status || 'offline').replace(/_/g, ' ')}</Badge>
           <TenantBadge tenant={data.tenant} />
         </div>
       </div>
