@@ -1,6 +1,7 @@
+import { prepareRingback } from './ringback';
 let activeConnection = null;
 let outboundSetupUntil = 0;
-export function expectOutboundSetup() { outboundSetupUntil = Date.now() + 30000; }
+export function expectOutboundSetup() { outboundSetupUntil = Date.now() + 30000; prepareRingback(); }
 export function clearOutboundSetup() { outboundSetupUntil = 0; }
 
 export function setActivePhoneConnection(connection) { activeConnection = connection; }

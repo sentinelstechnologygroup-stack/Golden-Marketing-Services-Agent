@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { setRingback } from '@/lib/telephony/ringback';
+import { useSearchParams } from 'react-router-dom';
 import AgentPhoneConnection from '@/components/AgentPhoneConnection';
 import { placeBrowserCall, expectOutboundSetup, clearOutboundSetup } from '@/lib/telephony/browserClient';
 import { EmptyDataTable } from '@/components/CollectionStructure';
@@ -28,7 +30,9 @@ export default function AgentWorkspace() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedLeadId, setSelectedLeadId] = useState(null);
+  const [searchParams] = useSearchParams();
+  const [selectedLeadId, setSelectedLeadId] = useState(searchParams.get('leadId'));
+  useEffect(() => { if (searchParams.get('leadId')) setSelectedLeadId(searchParams.get('leadId')); }, [searchParams]);
 
   const load = async () => {
     setLoading(true); setError(null);
@@ -100,6 +104,7 @@ export default function AgentWorkspace() {
           </CardContent>
         </Card>
 
+        {data.reconnect_leads?.count > 0 && <Card className="lg:col-span-2"><CardHeader><CardTitle className="text-base">Previously contacted · call again</CardTitle></CardHeader><CardContent className="space-y-2">{data.reconnect_leads.items.map(lead => <Button key={lead.id} variant="outline" className="w-full justify-start" onClick={() => setSelectedLeadId(lead.id)}>{lead.first_name} {lead.last_name || ''} · {String(lead.lead_status || 'Follow up').replace(/_/g,' ')}</Button>)}</CardContent></Card>}
         {/* Lead context + disposition */}
         <div className="lg:col-span-3">
           {selectedLeadId ? (
@@ -163,6 +168,8 @@ function LeadContextPanel({ leadId, onSaved }) {
     }, 3000);
     return () => {active=false;clearInterval(timer);};
   }, [call?.callId, user]);
+
+  useEffect(() => { setRingback(call?.status === 'ringing'); return () => setRingback(false); }, [call?.status]);
 
   const startCall = async () => {
     if (!ctx?.lead?.phone) return;
@@ -291,7 +298,7 @@ function LeadContextPanel({ leadId, onSaved }) {
           {!call && telephony?.mode === 'production' && recordingPolicy === 'do_not_record' && <p className="text-xs text-muted-foreground">Recording is disabled for this Brand.</p>}
           {call ? (
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline">{call.status || 'in_progress'}</Badge>
+              <Badge variant="outline">{({dialing_agent:'Connecting your browser',ringing:'Dialing contact',in_progress:'Connected',completed:'Call ended'})[call.status] || call.status || 'Connecting'}</Badge>
               <Button size="sm" variant="outline" disabled={controlBusy || callEnded} onClick={() => control(toggleHold)}>
                 {call.status === 'on_hold' ? <Play className="h-3.5 w-3.5 mr-1" /> : <Pause className="h-3.5 w-3.5 mr-1" />}
                 {call.status === 'on_hold' ? 'Resume' : 'Hold'}

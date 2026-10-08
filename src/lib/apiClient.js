@@ -76,12 +76,13 @@ export const api = {
   // ---------- 1. Agent Workspace ----------
   getAgentWorkspace: (user) => guard(async () => {
     const filter = scopeByOrg(user);
-    const [newLeads, callbacks, followUps, brands, campaigns] = await Promise.all([
+    const [newLeads, callbacks, followUps, brands, campaigns, recentLeads] = await Promise.all([
       firebaseClient.entities.Lead.filter({ ...filter, lead_status: 'new', contact_attempts: 0 }, '-created_date', 100),
       firebaseClient.entities.FollowUpTask.filter({ ...filter, task_type: 'callback_reminder', status: 'pending' }, 'due_date', 100),
       firebaseClient.entities.FollowUpTask.filter({ ...filter, status: 'pending' }, 'due_date', 100),
       firebaseClient.entities.Brand.filter(scopeByOrg(user), '-created_date', 50),
       firebaseClient.entities.Campaign.filter(scopeByOrg(user), '-created_date', 50),
+      firebaseClient.entities.Lead.filter(filter, '-created_date', 500),
     ]);
     const scopedNew = applyBrandScope(user, newLeads);
     const scopedCb = applyBrandScope(user, callbacks);
@@ -94,6 +95,7 @@ export const api = {
       assigned_brands: scopedBrands,
       assigned_campaigns: scopedCampaigns,
       new_leads: listResponse(user, scopedNew),
+      reconnect_leads: listResponse(user, applyBrandScope(user, recentLeads).filter(l => !scopedNew.some(n => n.id === l.id))),
       callback_queue: listResponse(user, scopedCb),
       follow_up_queue: listResponse(user, scopedFu),
     };
