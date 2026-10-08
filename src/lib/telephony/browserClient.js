@@ -1,4 +1,7 @@
 let activeConnection = null;
+let outboundSetupUntil = 0;
+export function expectOutboundSetup() { outboundSetupUntil = Date.now() + 30000; }
+export function clearOutboundSetup() { outboundSetupUntil = 0; }
 
 export function setActivePhoneConnection(connection) { activeConnection = connection; }
 export function clearActivePhoneConnection(connection) { if (!connection || activeConnection === connection) activeConnection = null; }
@@ -21,10 +24,11 @@ export async function createBrowserClient(session, {onIncoming, onState, onError
       const call = notification.call;
       updates.get(call.id)?.(call);
       if (call.state === 'ringing' && call.direction === 'inbound') onIncoming({
+        outboundSetup: isOutboundSetup(call),
         accept: () => call.answer(), reject: () => call.hangup(),
         end: () => call.hangup(), mute: value => value ? call.muteAudio() : call.unmuteAudio(),
       });
-      if (['hangup', 'destroy', 'purge'].includes(call.state)) { onIncoming(null); onState('available'); }
+      if (['hangup', 'destroy', 'purge'].includes(call.state)) { onIncoming(null); clearOutboundSetup(); onState('available'); }
       else onState(call.state || 'available');
     });
     return {connect: () => new Promise((resolve,reject) => {
@@ -38,4 +42,12 @@ export async function createBrowserClient(session, {onIncoming, onState, onError
     }};
   }
   throw new Error('Calling is not configured.');
+}
+
+function isOutboundSetup(call) {
+  try {
+    const state = JSON.parse(atob(call.options?.clientState || ''));
+    if (state.gmsCallId) return state.legRole === 'agent';
+  } catch { /* Some SDK notifications omit client state. */ }
+  return Date.now() < outboundSetupUntil;
 }

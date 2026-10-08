@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import AgentPhoneConnection from '@/components/AgentPhoneConnection';
-import { placeBrowserCall } from '@/lib/telephony/browserClient';
+import { placeBrowserCall, expectOutboundSetup, clearOutboundSetup } from '@/lib/telephony/browserClient';
 import { EmptyDataTable } from '@/components/CollectionStructure';
 import { api, ApiError } from '@/lib/apiClient';
 import { useAuth } from '@/lib/AuthContext';
@@ -169,6 +169,7 @@ function LeadContextPanel({ leadId, onSaved }) {
     setCallLoading(true);
     try {
       await api.telephonyAction(user, 'claim_lead', {leadId});
+      expectOutboundSetup();
       const result = await api.postCall(user, { lead_id: leadId, to: ctx.lead.phone, recording_consent: recordingConsent });
       if (result.dial) {
         const browserCall = placeBrowserCall({...result.dial, onUpdate: update => {
@@ -182,6 +183,7 @@ function LeadContextPanel({ leadId, onSaved }) {
         description: result.mode === 'mock' ? 'Mock mode — no real call was placed.' : 'The phone service accepted the call request.'
       });
     } catch (e) {
+      clearOutboundSetup();
       toast({ title: 'Call could not start', description: e.message, variant: 'destructive' });
     } finally { setCallLoading(false); }
   };
