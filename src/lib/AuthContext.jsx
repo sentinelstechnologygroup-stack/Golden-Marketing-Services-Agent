@@ -1,3 +1,4 @@
+import {usePortalSessionLimit, PortalUpdateNotice} from './PortalSessionPolicy';
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { firebaseClient } from '@/api/firebaseClient';
 import { appParams } from '@/lib/app-params';
@@ -105,6 +106,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = (shouldRedirect = true) => {
+    localStorage.removeItem('gms-agent-session-activity');
     setUser(null);
     setIsAuthenticated(false);
     
@@ -122,6 +124,7 @@ export const AuthProvider = ({ children }) => {
     firebaseClient.auth.redirectToLogin(window.location.href);
   };
 
+  usePortalSessionLimit(isAuthenticated, () => logout(false), 'gms-agent');
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -136,6 +139,7 @@ export const AuthProvider = ({ children }) => {
       checkUserAuth,
       checkAppState
     }}>
+      <PortalUpdateNotice />
       {children}
     </AuthContext.Provider>
   );

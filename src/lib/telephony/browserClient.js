@@ -1,5 +1,7 @@
 import { prepareRingback } from './ringback';
 let activeConnection = null;
+let activePhoneCall = false;
+export function hasActivePhoneCall() { return activePhoneCall; }
 let outboundSetupUntil = 0;
 export function expectOutboundSetup() { outboundSetupUntil = Date.now() + 30000; prepareRingback(); }
 export function clearOutboundSetup() { outboundSetupUntil = 0; }
@@ -23,6 +25,7 @@ export async function createBrowserClient(session, {onIncoming, onState, onError
     client.on('telnyx.notification', notification => {
       if (notification.type !== 'callUpdate') return;
       const call = notification.call;
+      activePhoneCall = ['ringing','answering','active','held','recovering'].includes(call.state);
       updates.get(call.id)?.(call);
       if (call.state === 'ringing' && call.direction === 'inbound') onIncoming({
         outboundSetup: isOutboundSetup(call),

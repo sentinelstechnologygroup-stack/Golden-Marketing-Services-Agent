@@ -1,10 +1,12 @@
+import LeadDetail from '@/pages/LeadDetail';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import QualField from '@/components/leads/QualificationField';
 import { firebaseClient } from '@/api/firebaseClient';
 import React, { useEffect, useState } from 'react';
 import { setRingback } from '@/lib/telephony/ringback';
 import { useSearchParams } from 'react-router-dom';
 import AgentPhoneConnection from '@/components/AgentPhoneConnection';
-import { placeBrowserCall, expectOutboundSetup, clearOutboundSetup } from '@/lib/telephony/browserClient';
+import { placeBrowserCall, expectOutboundSetup, clearOutboundSetup, hasActivePhoneCall } from '@/lib/telephony/browserClient';
 import { EmptyDataTable } from '@/components/CollectionStructure';
 import { api, ApiError } from '@/lib/apiClient';
 import { useAuth } from '@/lib/AuthContext';
@@ -41,7 +43,7 @@ export default function AgentWorkspace() {
     try {
       const ws = await api.getAgentWorkspace(user);
       setData(ws);
-      if (!selectedLeadId && ws.new_leads.items[0]) setSelectedLeadId(ws.new_leads.items[0].id);
+
     } catch (e) {
       setError(e);
     } finally {
@@ -107,20 +109,14 @@ export default function AgentWorkspace() {
         </Card>
 
         {data.reconnect_leads?.count > 0 && <Card className="lg:col-span-2"><CardHeader><CardTitle className="text-base">Previously contacted · call again</CardTitle></CardHeader><CardContent className="space-y-2">{data.reconnect_leads.items.map(lead => <Button key={lead.id} variant="outline" className="w-full justify-start" onClick={() => setSelectedLeadId(lead.id)}>{lead.first_name} {lead.last_name || ''} · {String(lead.lead_status || 'Follow up').replace(/_/g,' ')}</Button>)}</CardContent></Card>}
-        {/* Lead context + disposition */}
-        <div className="lg:col-span-3">
-          {selectedLeadId ? (
-            <LeadContextPanel leadId={selectedLeadId} onSaved={load} />
-          ) : (
-            <Card><CardContent className="py-16"><EmptyState message="Select a lead to view pre-call context." /></CardContent></Card>
-          )}
-        </div>
+
       </div>
+      <Dialog open={Boolean(selectedLeadId)} onOpenChange={open => {if (!open) {if (hasActivePhoneCall()) {toast({title:'End the active call before closing the lead.'});return;}setSelectedLeadId(null);window.history.replaceState(null,'', '/workspace');}}}><DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto"><DialogTitle>Lead record</DialogTitle>{selectedLeadId && <LeadDetail leadId={selectedLeadId} embedded />}</DialogContent></Dialog>
     </div>
   );
 }
 
-function LeadContextPanel({ leadId, onSaved }) {
+export function LeadContextPanel({ leadId, onSaved, callOnly = false }) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [ctx, setCtx] = useState(null);
@@ -234,6 +230,48 @@ function LeadContextPanel({ leadId, onSaved }) {
   const { lead, brand, campaign, script, form, calls, duplicates, lead_age_minutes } = ctx;
   const callEnded = ['completed', 'failed', 'canceled', 'cancelled'].includes(call?.status);
   const recordingPolicy = telephony?.recordingPolicy || 'do_not_record';
+
+  if (callOnly) return (<Card className={telephony?.mode === 'production' ? 'border-emerald-300' : telephony?.mode === 'unavailable' ? 'border-rose-300 bg-rose-50' : 'border-amber-300'}>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center justify-between">
+            <span className="flex items-center gap-2"><PhoneCall className="h-4 w-4" /> CRM calling</span>
+            <Badge variant="outline" className={telephony?.mode === 'production' ? 'text-emerald-700' : telephony?.mode === 'unavailable' ? 'border-rose-300 bg-rose-100 text-rose-800' : 'text-amber-700'}>
+              {telephony?.mode === 'production' ? 'Calling enabled' : telephony?.mode === 'unavailable' ? 'Unavailable' : 'Test mode'}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <AgentPhoneConnection user={user} />
+          {!call && telephony?.mode === 'production' && recordingPolicy === 'record_on_consent' && (
+            <label className="flex items-start gap-2 rounded-md border border-border p-3 text-sm">
+              <input type="checkbox" className="mt-1" checked={recordingConsent} onChange={(event) => setRecordingConsent(event.target.checked)} />
+              <span><span className="font-medium">Recording consent confirmed</span><span className="block text-xs text-muted-foreground">Select only after the approved disclosure is read and the prospect affirmatively agrees.</span></span>
+            </label>
+          )}
+          {!call && telephony?.mode === 'production' && recordingPolicy === 'record_all' && <p className="text-xs text-amber-700">This Brand is configured to record calls. Read the approved recording disclosure before connecting.</p>}
+          {!call && telephony?.mode === 'production' && recordingPolicy === 'do_not_record' && <p className="text-xs text-muted-foreground">Recording is disabled for this Brand.</p>}
+          {call ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline">{({dialing_agent:'Connecting your browser',ringing:'Dialing contact',in_progress:'Connected',completed:'Call ended'})[call.status] || call.status || 'Connecting'}</Badge>
+              <Button size="sm" variant="outline" disabled={controlBusy || callEnded} onClick={() => control(toggleHold)}>
+                {call.status === 'on_hold' ? <Play className="h-3.5 w-3.5 mr-1" /> : <Pause className="h-3.5 w-3.5 mr-1" />}
+                {call.status === 'on_hold' ? 'Resume' : 'Hold'}
+              </Button>
+              <Button size="sm" variant="destructive" disabled={controlBusy || callEnded} onClick={() => control(endCall)}><PhoneOff className="h-3.5 w-3.5 mr-1" />End call</Button>
+              <Button size="sm" variant="outline" disabled={controlBusy || callEnded || recordingPolicy === 'do_not_record' || transferStatus === 'consulting'} onClick={() => transfer('start_consultation')}><ArrowRightLeft className="h-3.5 w-3.5 mr-1" />Consult customer</Button>
+              {transferStatus === 'consulting' && <><Button size="sm" disabled={controlBusy} onClick={() => transfer('complete_transfer')}>Complete handoff</Button><Button size="sm" variant="outline" disabled={controlBusy} onClick={() => transfer('cancel_transfer')}>Cancel handoff</Button></>}
+              {callEnded && <Button size="sm" onClick={() => {setCall(null);setControlError(null);setTransferStatus(null);}}>New call</Button>}
+              {transferStatus && <Badge variant="outline">{transferStatus.replace(/_/g, ' ')}</Badge>}
+            </div>
+          ) : (
+            <Button onClick={startCall} disabled={callLoading || !lead.phone || telephony?.mode !== 'production'}>
+              <PhoneCall className="h-4 w-4 mr-2" />{callLoading ? 'Starting…' : 'Call ' + lead.first_name}
+            </Button>
+          )}
+          {controlError && <p role="alert" className="text-sm text-destructive">{controlError}</p>}
+          <p className="text-xs text-muted-foreground">{telephony?.mode === 'production' ? 'Call activity and recording status attach to this lead.' : telephony?.mode === 'unavailable' ? telephony.warning : 'Calling is awaiting configuration. No real call will be placed.'}</p>
+        </CardContent>
+      </Card>);
 
   return (
     <div className="space-y-4">
