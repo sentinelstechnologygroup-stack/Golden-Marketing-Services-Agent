@@ -1,3 +1,4 @@
+import { LeadContextPanel } from '@/pages/AgentWorkspace';
 import QualField from '@/components/leads/QualificationField';
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
@@ -21,8 +22,9 @@ const STATUS_COLORS = {
   unqualified: 'bg-rose-100 text-rose-700', closed: 'bg-slate-100 text-slate-700', lost: 'bg-rose-100 text-rose-700',
 };
 
-export default function LeadDetail() {
-  const { id } = useParams();
+export default function LeadDetail({leadId, embedded = false}) {
+  const { id: routeId } = useParams();
+  const id = leadId || routeId;
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -243,7 +245,7 @@ export default function LeadDetail() {
       </div>
 
       {/* Pre-call context banner */}
-      <Card><CardContent className="p-4 flex items-center justify-between gap-3"><div><p className="font-semibold">Outbound calling</p><p className="text-sm text-muted-foreground">Call this lead again from any status. Calling permissions and opt-out restrictions still apply.</p></div><Button onClick={() => navigate('/workspace?leadId='+encodeURIComponent(id))}><Phone className="h-4 w-4 mr-2" />Call {lead?.first_name || 'lead'}</Button></CardContent></Card>
+      <LeadContextPanel key={id} leadId={id} callOnly />
       <GoHighLevelLeadConversation key={id} leadId={id} />
       <Card className="border-l-4 border-l-primary">
         <CardContent className="p-4 space-y-1">
@@ -390,7 +392,7 @@ export default function LeadDetail() {
           <CardHeader><CardTitle className="text-sm">Call History</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
             {calls.length === 0 ? <p className="text-muted-foreground">No calls yet.</p> :
-              calls.map(c => <div key={c.id} className="border border-border rounded p-2"><div className="flex justify-between"><Badge variant="outline">{c.disposition.replace(/_/g, ' ')}</Badge><span className="text-xs text-muted-foreground">{new Date(c.call_start).toLocaleString()}</span></div>{c.notes && <p className="mt-1 text-xs">{c.notes}</p>}</div>)}
+              calls.map(c => <details key={c.id} className="border border-border rounded p-2"><summary className="cursor-pointer"><Badge variant="outline">{String(c.disposition || c.status || 'Call').replace(/_/g,' ')}</Badge> <span className="text-xs text-muted-foreground">{callDate(c.call_start || c.created_date || c.createdAt)}</span></summary><div className="mt-2 text-sm space-y-1"><p>{c.notes || 'No notes recorded.'}</p><p>Duration: {c.duration_seconds ?? 'Not available'} seconds</p><p>Call reference: {c.id}</p></div></details>)}
           </CardContent>
         </Card>
         <Card>
@@ -439,3 +441,5 @@ function computeQualStatus(form, answers) {
   form.questions.forEach(q => { if (answers[q.id] === 'yes') score += (q.score_weight || 0); });
   return score >= (form.qualification_threshold || 0) ? 'qualified' : 'unqualified';
 }
+
+function callDate(value) { const milliseconds=value?.seconds ? value.seconds*1000 : value?._seconds ? value._seconds*1000 : value;const date=value?.toDate ? value.toDate() : new Date(milliseconds);return Number.isNaN(date.getTime()) ? 'Time unavailable' : date.toLocaleString();}
