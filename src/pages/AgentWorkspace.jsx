@@ -1,7 +1,5 @@
 import LeadDetail from '@/pages/LeadDetail';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import QualField from '@/components/leads/QualificationField';
-import { firebaseClient } from '@/api/firebaseClient';
 import React, { useEffect, useState } from 'react';
 import { setRingback } from '@/lib/telephony/ringback';
 import { useSearchParams } from 'react-router-dom';
@@ -13,12 +11,9 @@ import { useAuth } from '@/lib/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { AuthError, ErrorState, EmptyState, ContextChips, TenantBadge } from '@/components/ContractState';
-import { Phone, Clock, AlertCircle, Headphones, Volume2, PhoneCall, PhoneOff, Pause, Play, ArrowRightLeft } from 'lucide-react';
+import { AuthError, ErrorState, TenantBadge } from '@/components/ContractState';
+import { Phone, Clock, AlertCircle, Headphones, PhoneCall, PhoneOff, Pause, Play, ArrowRightLeft } from 'lucide-react';
 
 const DISPOSITIONS = ['attempted', 'no_answer', 'voicemail_left', 'connected', 'qualified', 'unqualified', 'duplicate', 'wrong_number', 'do_not_call', 'warm_transfer_completed', 'appointment_booked', 'follow_up_required', 'closed', 'lost'];
 
@@ -233,16 +228,8 @@ export function LeadContextPanel({ leadId, onSaved, callOnly = false, initialCon
   const callEnded = ['completed', 'failed', 'canceled', 'cancelled'].includes(call?.status);
   const recordingPolicy = telephony?.recordingPolicy || 'do_not_record';
 
-  if (callOnly) return (<Card className={telephony?.mode === 'production' ? 'border-emerald-300' : telephony?.mode === 'unavailable' ? 'border-rose-300 bg-rose-50' : 'border-amber-300'}>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center justify-between">
-            <span className="flex items-center gap-2"><PhoneCall className="h-4 w-4" /> CRM calling</span>
-            <Badge variant="outline" className={telephony?.mode === 'production' ? 'text-emerald-700' : telephony?.mode === 'unavailable' ? 'border-rose-300 bg-rose-100 text-rose-800' : 'text-amber-700'}>
-              {telephony?.mode === 'production' ? 'Calling enabled' : telephony?.mode === 'unavailable' ? 'Unavailable' : 'Test mode'}
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+  return (<Card className={telephony?.mode === 'production' ? 'border-emerald-300' : telephony?.mode === 'unavailable' ? 'border-rose-300 bg-rose-50' : 'border-amber-300'}>
+        <CardContent className="space-y-2 p-2">
 
           {!call && telephony?.mode === 'production' && recordingPolicy === 'record_on_consent' && (
             <label className="flex items-start gap-2 rounded-md border border-border p-3 text-sm">
@@ -271,126 +258,10 @@ export function LeadContextPanel({ leadId, onSaved, callOnly = false, initialCon
             </Button>
           )}
           {controlError && <p role="alert" className="text-sm text-destructive">{controlError}</p>}
-          <p className="text-xs text-muted-foreground">{telephony?.mode === 'production' ? 'Call activity and recording status attach to this lead.' : telephony?.mode === 'unavailable' ? telephony.warning : 'Calling is awaiting configuration. No real call will be placed.'}</p>
+          <p className="text-xs text-muted-foreground">{controlError ? '' : telephony?.mode === 'unavailable' ? telephony.warning : ''}</p>
         </CardContent>
       </Card>);
 
-  return (
-    <div className="space-y-4">
-      {/* Pre-call context banner */}
-      <Card className="border-l-4 border-l-primary">
-        <CardContent className="p-4 space-y-3">
-          <ContextChips brand={brand} campaign={campaign} extra={[`Age ${ageLabel(lead_age_minutes)}`, `Priority ${lead.priority || 5}`]} />
-          <h2 className="text-xl font-heading font-semibold">{lead.first_name} {lead.last_name || ''}</h2>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
-            {lead.phone && <span className="flex items-center gap-1"><Phone className="h-3.5 w-3.5" />{lead.phone}</span>}
-            {lead.email && <span>{lead.email}</span>}
-            {lead.location && <span>{lead.location}</span>}
-          </div>
-          {brand?.default_greeting && (
-            <div className="text-sm p-2 rounded bg-muted"><span className="font-medium">Required greeting: </span>{brand.default_greeting}</div>
-          )}
-          <div className="text-xs text-muted-foreground flex items-center gap-1"><Volume2 className="h-3.5 w-3.5" /><span className="font-medium">Whisper:</span> {brand?.display_name || '—'}, {campaign?.name || '—'} lead.</div>
-        </CardContent>
-      </Card>
-
-      {duplicates?.length > 0 && (
-        <Card className="border-amber-300 bg-amber-50">
-          <CardContent className="p-3 text-sm text-amber-800 flex items-center gap-2">
-            <AlertCircle className="h-4 w-4" /> Possible duplicate — {duplicates.length} matching lead(s) found.
-          </CardContent>
-        </Card>
-      )}
-
-      <Card className={telephony?.mode === 'production' ? 'border-emerald-300' : telephony?.mode === 'unavailable' ? 'border-rose-300 bg-rose-50' : 'border-amber-300'}>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center justify-between">
-            <span className="flex items-center gap-2"><PhoneCall className="h-4 w-4" /> CRM calling</span>
-            <Badge variant="outline" className={telephony?.mode === 'production' ? 'text-emerald-700' : telephony?.mode === 'unavailable' ? 'border-rose-300 bg-rose-100 text-rose-800' : 'text-amber-700'}>
-              {telephony?.mode === 'production' ? 'Calling enabled' : telephony?.mode === 'unavailable' ? 'Unavailable' : 'Test mode'}
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-
-          {!call && telephony?.mode === 'production' && recordingPolicy === 'record_on_consent' && (
-            <label className="flex items-start gap-2 rounded-md border border-border p-3 text-sm">
-              <input type="checkbox" className="mt-1" checked={recordingConsent} onChange={(event) => setRecordingConsent(event.target.checked)} />
-              <span><span className="font-medium">Recording consent confirmed</span><span className="block text-xs text-muted-foreground">Select only after the approved disclosure is read and the prospect affirmatively agrees.</span></span>
-            </label>
-          )}
-          {!call && telephony?.mode === 'production' && recordingPolicy === 'record_all' && <p className="text-xs text-amber-700">This Brand is configured to record calls. Read the approved recording disclosure before connecting.</p>}
-          {!call && telephony?.mode === 'production' && recordingPolicy === 'do_not_record' && <p className="text-xs text-muted-foreground">Recording is disabled for this Brand.</p>}
-          {call && !callEnded ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline">{({dialing_agent:'Connecting your browser',ringing:'Dialing contact',in_progress:'Connected',completed:'Call ended'})[call.status] || call.status || 'Connecting'}</Badge>
-              <Button size="sm" variant="outline" disabled={controlBusy || callEnded} onClick={() => control(toggleHold)}>
-                {call.status === 'on_hold' ? <Play className="h-3.5 w-3.5 mr-1" /> : <Pause className="h-3.5 w-3.5 mr-1" />}
-                {call.status === 'on_hold' ? 'Resume' : 'Hold'}
-              </Button>
-              <Button size="sm" variant="destructive" disabled={controlBusy || callEnded} onClick={() => control(endCall)}><PhoneOff className="h-3.5 w-3.5 mr-1" />End call</Button>
-              <Button size="sm" variant="outline" disabled={controlBusy || callEnded || recordingPolicy === 'do_not_record' || transferStatus === 'consulting'} onClick={() => transfer('start_consultation')}><ArrowRightLeft className="h-3.5 w-3.5 mr-1" />Consult customer</Button>
-              {transferStatus === 'consulting' && <><Button size="sm" disabled={controlBusy} onClick={() => transfer('complete_transfer')}>Complete handoff</Button><Button size="sm" variant="outline" disabled={controlBusy} onClick={() => transfer('cancel_transfer')}>Cancel handoff</Button></>}
-              {callEnded && <Button size="sm" onClick={() => {setCall(null);setControlError(null);setTransferStatus(null);}}>New call</Button>}
-              {transferStatus && <Badge variant="outline">{transferStatus.replace(/_/g, ' ')}</Badge>}
-            </div>
-          ) : (
-            <Button onClick={startCall} disabled={callLoading || !lead.phone || telephony?.mode !== 'production'}>
-              <PhoneCall className="h-4 w-4 mr-2" />{callLoading ? 'Starting…' : 'Call ' + lead.first_name}
-            </Button>
-          )}
-          {controlError && <p role="alert" className="text-sm text-destructive">{controlError}</p>}
-          <p className="text-xs text-muted-foreground">{telephony?.mode === 'production' ? 'Call activity and recording status attach to this lead.' : telephony?.mode === 'unavailable' ? telephony.warning : 'Calling is awaiting configuration. No real call will be placed.'}</p>
-        </CardContent>
-      </Card>
-
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader><CardTitle className="text-sm">Required Script</CardTitle></CardHeader>
-          <CardContent className="text-sm space-y-2">
-            {script ? <>
-              <p className="font-medium">{script.name} (v{script.version_number})</p>
-              {script.opening_statement && <div className="p-2 rounded bg-muted">{script.opening_statement}</div>}
-              {script.qualification_questions && <div className="whitespace-pre-wrap text-xs">{script.qualification_questions}</div>}
-              {script.transfer_language && <div className="p-2 rounded bg-muted text-xs">{script.transfer_language}</div>}
-            </> : <EmptyState message="No approved script configured." />}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader><CardTitle className="text-sm">Required Qualification Form</CardTitle></CardHeader>
-          <CardContent className="text-sm">
-            {form ? <><p className="font-medium">{form.name}</p><p className="text-xs text-muted-foreground mt-1">{form.questions?.length || 0} questions</p><div className="space-y-4 mt-4">{form.questions?.map(q => <QualField key={q.id} q={q} value={qualAnswers[q.id]} onChange={value => setQualAnswers(previous => ({...previous,[q.id]:value}))} />)}</div><Button className="mt-4" onClick={() => control(async () => {await firebaseClient.entities.Lead.update(leadId,{qualification_data:qualAnswers});toast({title:"Qualification answers saved"});})}>Save qualification answers</Button></> : <EmptyState message="No form configured." />}
-          </CardContent>
-        </Card>
-      </div>
-
-
-      <Card>
-        <CardHeader><CardTitle className="text-sm">Log Disposition</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid gap-3 md:grid-cols-2">
-            <div><Label>Disposition</Label>
-              <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={disposition} onChange={e => setDisposition(e.target.value)}>
-                {DISPOSITIONS.map(d => <option key={d} value={d}>{d.replace(/_/g, ' ')}</option>)}
-              </select>
-            </div>
-            <div><Label>Next action</Label><Input value={nextAction} onChange={e => setNextAction(e.target.value)} /></div>
-          </div>
-          <div><Label>Notes</Label><Textarea rows={2} value={notes} onChange={e => setNotes(e.target.value)} /></div>
-          <Button onClick={save} disabled={saving}>{saving ? 'Saving...' : 'Save Disposition'}</Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader><CardTitle className="text-sm">Call History</CardTitle></CardHeader>
-        <CardContent className="text-sm space-y-2">
-          {calls?.length === 0 ? <EmptyState message="No calls yet." /> :
-            calls.map(c => <div key={c.id} className="flex justify-between border border-border rounded p-2"><Badge variant="outline">{String(c.disposition || c.status || 'call').replace(/_/g, ' ')}</Badge><span className="text-xs text-muted-foreground">{new Date(c.call_start).toLocaleString()}</span></div>)}
-        </CardContent>
-      </Card>
-    </div>
-  );
 }
 
 function StatCard({ label, value, icon: Icon, accent }) {
