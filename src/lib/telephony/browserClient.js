@@ -1,6 +1,9 @@
 import { prepareRingback } from './ringback';
 let activeConnection = null;
 let activePhoneCall = false;
+let operatorMode = 'offline';
+export function canPlaceCall() { return Boolean(activeConnection) && ['available','after_call_work'].includes(operatorMode); }
+export function setOperatorMode(mode) { operatorMode=mode; }
 export function hasActivePhoneCall() { return activePhoneCall; }
 let outboundSetupUntil = 0;
 export function expectOutboundSetup() { outboundSetupUntil = Date.now() + 30000; prepareRingback(); }
@@ -20,6 +23,7 @@ export async function createBrowserClient(session, {onIncoming, onState, onError
     const {TelnyxRTC} = await import('@telnyx/webrtc');
     const client = new TelnyxRTC({login_token: session.token});
     const updates = new Map();
+    const answered = new Set();
     client.remoteElement = audio;
     client.on('telnyx.error', onError);
     client.on('telnyx.notification', notification => {
@@ -27,6 +31,10 @@ export async function createBrowserClient(session, {onIncoming, onState, onError
       const call = notification.call;
       activePhoneCall = ['ringing','answering','active','held','recovering'].includes(call.state);
       updates.get(call.id)?.(call);
+      if (call.state === 'ringing' && call.direction === 'inbound' && isOutboundSetup(call) && Date.now() < outboundSetupUntil) {
+        if (!answered.has(call.id)) { answered.add(call.id); Promise.resolve(call.answer()).then(() => {onIncoming(null);onState('active');audio?.play().catch(() => onError(new Error('Audio playback blocked.')));}).catch(onError); }
+        return;
+      }
       if (call.state === 'ringing' && call.direction === 'inbound') onIncoming({
         outboundSetup: isOutboundSetup(call),
         accept: () => call.answer(), reject: () => call.hangup(),

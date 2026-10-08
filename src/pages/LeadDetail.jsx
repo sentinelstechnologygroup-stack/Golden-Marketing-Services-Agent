@@ -1,3 +1,4 @@
+import AgentPhoneConnection from '@/components/AgentPhoneConnection';
 import { LeadContextPanel } from '@/pages/AgentWorkspace';
 import QualField from '@/components/leads/QualificationField';
 import React, { useEffect, useState } from 'react';
@@ -32,7 +33,7 @@ export default function LeadDetail({leadId, embedded = false}) {
   const [brand, setBrand] = useState(null);
   const [campaign, setCampaign] = useState(null);
   const [script, setScript] = useState(null);
-  const [qualForm, setQualForm] = useState(null);
+  const [qualForm, setQualForm] = useState(undefined);
   const [calls, setCalls] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [appointments, setAppointments] = useState([]);
@@ -59,11 +60,16 @@ export default function LeadDetail({leadId, embedded = false}) {
       setLead(l);
       setDisposition(l.disposition || 'attempted');
       setQualAnswers(l.qualification_data || {});
+      setLoading(false);
 
-      const [brandData, campaignData] = await Promise.all([
+      const [brandData, campaignData, callData, taskData, apptData] = await Promise.all([
         firebaseClient.entities.Brand.get(l.brand_id).catch(() => null),
         l.campaign_id ? firebaseClient.entities.Campaign.get(l.campaign_id).catch(() => null) : Promise.resolve(null),
+        firebaseClient.entities.CallRecord.filter({ lead_id:id },'-call_start',50).catch(() => []),
+        firebaseClient.entities.FollowUpTask.filter({ lead_id:id },'due_date',50).catch(() => []),
+        firebaseClient.entities.Appointment.filter({ lead_id:id },'scheduled_start',50).catch(() => []),
       ]);
+      setCalls(callData);setTasks(taskData);setAppointments(apptData);
       setBrand(brandData);
       setCampaign(campaignData);
 
@@ -90,16 +96,6 @@ export default function LeadDetail({leadId, embedded = false}) {
         form = forms[0] || null;
       }
       setQualForm(form);
-
-      // Calls, tasks, appointments
-      const [callData, taskData, apptData] = await Promise.all([
-        firebaseClient.entities.CallRecord.filter({ lead_id: id }, '-call_start', 50),
-        firebaseClient.entities.FollowUpTask.filter({ lead_id: id }, 'due_date', 50),
-        firebaseClient.entities.Appointment.filter({ lead_id: id }, 'scheduled_start', 50),
-      ]);
-      setCalls(callData);
-      setTasks(taskData);
-      setAppointments(apptData);
 
       // Duplicate detection
       if (l.phone || l.email) {
@@ -245,7 +241,8 @@ export default function LeadDetail({leadId, embedded = false}) {
       </div>
 
       {/* Pre-call context banner */}
-      <LeadContextPanel key={id} leadId={id} callOnly />
+      {!embedded && <AgentPhoneConnection user={user} />}
+      <LeadContextPanel key={id} leadId={id} callOnly initialContext={{lead,brand,campaign,script,form:qualForm,calls,duplicates:[],lead_age_minutes:0}} />
       <GoHighLevelLeadConversation key={id} leadId={id} />
       <Card className="border-l-4 border-l-primary">
         <CardContent className="p-4 space-y-1">
@@ -336,7 +333,7 @@ export default function LeadDetail({leadId, embedded = false}) {
           <CardContent className="space-y-3 text-sm">
             {qualForm && qualForm.questions?.length ? (
               qualForm.questions.map(q => <QualField key={q.id} q={q} value={qualAnswers[q.id]} onChange={v => setQualAnswers(prev => ({ ...prev, [q.id]: v }))} />)
-            ) : <p className="text-muted-foreground">No qualification form configured.</p>}
+            ) : <p className="text-muted-foreground">{qualForm === undefined ? 'Loading qualification questions…' : 'No qualification form configured.'}</p>}
           </CardContent>
         </Card>
       </div>

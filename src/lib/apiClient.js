@@ -226,7 +226,7 @@ export const api = {
         connected: scopedLeads.filter(l => l.lead_status === 'connected').length,
         qualified: scopedLeads.filter(l => l.qualification_status === 'qualified').length,
       },
-      agents: agents.map(a => ({ id: a.id, name: a.full_name || a.email, role: a.role, agent_status: a.agent_status })),
+      agents: agents.map(a => ({ id: a.id, name: a.full_name || a.email, role: a.role, agent_status: presenceStatus(a) })),
       unworked, overdue,
     };
   }),
@@ -467,3 +467,5 @@ export const api = {
     };
   }),
 };
+
+function presenceStatus(agent) { const value=agent.presenceUpdatedAt || agent.presence_updated_at;const timestamp=value?.toMillis ? value.toMillis() : value?.seconds ? value.seconds*1000 : new Date(value).getTime();return Number.isFinite(timestamp) && Date.now()-timestamp>90000 ? 'offline' : agent.agent_status || 'offline';}

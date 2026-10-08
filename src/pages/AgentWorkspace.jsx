@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { setRingback } from '@/lib/telephony/ringback';
 import { useSearchParams } from 'react-router-dom';
 import AgentPhoneConnection from '@/components/AgentPhoneConnection';
-import { placeBrowserCall, expectOutboundSetup, clearOutboundSetup, hasActivePhoneCall } from '@/lib/telephony/browserClient';
+import { placeBrowserCall, expectOutboundSetup, clearOutboundSetup, hasActivePhoneCall, canPlaceCall } from '@/lib/telephony/browserClient';
 import { EmptyDataTable } from '@/components/CollectionStructure';
 import { api, ApiError } from '@/lib/apiClient';
 import { useAuth } from '@/lib/AuthContext';
@@ -72,6 +72,8 @@ export default function AgentWorkspace() {
 
 
 
+      <AgentPhoneConnection user={user} />
+
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <StatCard label="New Leads" value={data.new_leads.count} icon={AlertCircle} accent="bg-blue-50 text-blue-600" />
         <StatCard label="Callbacks Due" value={data.callback_queue.count} icon={Clock} accent="bg-amber-50 text-amber-600" />
@@ -116,7 +118,7 @@ export default function AgentWorkspace() {
   );
 }
 
-export function LeadContextPanel({ leadId, onSaved, callOnly = false }) {
+export function LeadContextPanel({ leadId, onSaved, callOnly = false, initialContext }) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [ctx, setCtx] = useState(null);
@@ -146,7 +148,7 @@ export function LeadContextPanel({ leadId, onSaved, callOnly = false }) {
   const load = async () => {
     setLoading(true); setError(null);
     try {
-      const c = await api.getLead(user, leadId);
+      const c = initialContext || await api.getLead(user, leadId);
       setCtx(c);
       setQualAnswers(c.lead.qualification_data || {});
       setDisposition(c.lead.disposition || 'attempted');
@@ -172,6 +174,7 @@ export function LeadContextPanel({ leadId, onSaved, callOnly = false }) {
   useEffect(() => { setRingback(call?.status === 'ringing'); return () => setRingback(false); }, [call?.status]);
 
   const startCall = async () => {
+    if (!canPlaceCall()) {toast({title:'Enable outbound calls and set Available in the workspace control panel.',variant:'destructive'});return;}
     if (!ctx?.lead?.phone) return;
     setCallLoading(true);
     try {
@@ -241,7 +244,7 @@ export function LeadContextPanel({ leadId, onSaved, callOnly = false }) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <AgentPhoneConnection user={user} />
+
           {!call && telephony?.mode === 'production' && recordingPolicy === 'record_on_consent' && (
             <label className="flex items-start gap-2 rounded-md border border-border p-3 text-sm">
               <input type="checkbox" className="mt-1" checked={recordingConsent} onChange={(event) => setRecordingConsent(event.target.checked)} />
@@ -250,7 +253,7 @@ export function LeadContextPanel({ leadId, onSaved, callOnly = false }) {
           )}
           {!call && telephony?.mode === 'production' && recordingPolicy === 'record_all' && <p className="text-xs text-amber-700">This Brand is configured to record calls. Read the approved recording disclosure before connecting.</p>}
           {!call && telephony?.mode === 'production' && recordingPolicy === 'do_not_record' && <p className="text-xs text-muted-foreground">Recording is disabled for this Brand.</p>}
-          {call ? (
+          {call && !callEnded ? (
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline">{({dialing_agent:'Connecting your browser',ringing:'Dialing contact',in_progress:'Connected',completed:'Call ended'})[call.status] || call.status || 'Connecting'}</Badge>
               <Button size="sm" variant="outline" disabled={controlBusy || callEnded} onClick={() => control(toggleHold)}>
@@ -310,7 +313,7 @@ export function LeadContextPanel({ leadId, onSaved, callOnly = false }) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <AgentPhoneConnection user={user} />
+
           {!call && telephony?.mode === 'production' && recordingPolicy === 'record_on_consent' && (
             <label className="flex items-start gap-2 rounded-md border border-border p-3 text-sm">
               <input type="checkbox" className="mt-1" checked={recordingConsent} onChange={(event) => setRecordingConsent(event.target.checked)} />
@@ -319,7 +322,7 @@ export function LeadContextPanel({ leadId, onSaved, callOnly = false }) {
           )}
           {!call && telephony?.mode === 'production' && recordingPolicy === 'record_all' && <p className="text-xs text-amber-700">This Brand is configured to record calls. Read the approved recording disclosure before connecting.</p>}
           {!call && telephony?.mode === 'production' && recordingPolicy === 'do_not_record' && <p className="text-xs text-muted-foreground">Recording is disabled for this Brand.</p>}
-          {call ? (
+          {call && !callEnded ? (
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline">{({dialing_agent:'Connecting your browser',ringing:'Dialing contact',in_progress:'Connected',completed:'Call ended'})[call.status] || call.status || 'Connecting'}</Badge>
               <Button size="sm" variant="outline" disabled={controlBusy || callEnded} onClick={() => control(toggleHold)}>

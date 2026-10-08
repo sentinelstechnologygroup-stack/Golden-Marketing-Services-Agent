@@ -20,6 +20,7 @@ export default function SupervisorWorkspace() {
     finally { setLoading(false); }
   };
   useEffect(() => { load(); }, [user]);
+  useEffect(() => {const timer=setInterval(load,30000);return()=>clearInterval(timer);},[user]);
 
   if (loading) return <Spinner />;
   if (error) return error instanceof ApiError && (error.status === 401 || error.status === 403)

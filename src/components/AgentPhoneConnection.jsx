@@ -1,22 +1,21 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect,useRef,useState} from 'react';
 import {api} from '@/lib/apiClient';
-import {clearActivePhoneConnection, createBrowserClient, setActivePhoneConnection} from '@/lib/telephony/browserClient';
+import {prepareRingback} from '@/lib/telephony/ringback';
+import {clearActivePhoneConnection,createBrowserClient,setActivePhoneConnection,setOperatorMode,hasActivePhoneCall} from '@/lib/telephony/browserClient';
 import {Button} from '@/components/ui/button';
+const MODES=[['available','Available'],['standby','Standby'],['do_not_disturb','Do not disturb'],['break','Break'],['after_call_work','After-call work']];
 export default function AgentPhoneConnection({user}) {
-  const client=useRef(null), audio=useRef(null), generation=useRef(0);
-  const [status,setStatus]=useState('offline'), [incoming,setIncoming]=useState(null), [error,setError]=useState(null);
-  useEffect(()=>()=>{generation.current++;clearActivePhoneConnection(client.current);client.current?.disconnect();client.current=null;},[user]);
-  const connect=async()=>{
-    const current=++generation.current; setError(null);setStatus('connecting');
-    try {
-      const session=await api.telephonyAction(user,'browser_session');
-      const connection=await createBrowserClient(session,{audio:audio.current,onIncoming:setIncoming,onState:setStatus,onError:()=>{setError('Calling connection lost. Reconnect to receive calls.');setStatus('offline');}});
-      if(current!==generation.current){connection.disconnect();return;}
-      client.current=connection;await connection.connect();setActivePhoneConnection(connection);
-      await api.telephonyAction(user,'set_availability',{status:'available'});
-    } catch(e) {client.current?.disconnect();client.current=null;setStatus('offline');setError(e.message);}
-  };
-  const disconnect=async()=>{generation.current++;clearActivePhoneConnection(client.current);client.current?.disconnect();client.current=null;setIncoming(null);setStatus('offline');await api.telephonyAction(user,'set_availability',{status:'offline'});};
-  const answer=async()=>{try{await incoming.accept();setIncoming(null);setStatus('busy');await audio.current?.play().catch(() => setError('Audio playback was blocked. Check browser sound permissions and your selected speaker.'));}catch(e){setError(e.message);}};
-  return <div className="space-y-2"><audio ref={audio} autoPlay /><div className="flex flex-wrap items-center gap-2"><span className="text-sm capitalize">Calling: {String(status || 'offline').replace(/_/g,' ')}</span><Button size="sm" variant="outline" disabled={status==='connecting'} onClick={()=>{(client.current?disconnect():connect()).catch(e=>setError(e.message));}}>{client.current?'Go offline':'Connect calling'}</Button>{incoming && <div role="alert" className="rounded-lg border-2 border-amber-500 bg-amber-50 p-4 space-y-2"><p className="font-semibold">{incoming.outboundSetup ? 'Ready to place your outbound call' : 'Incoming call'}</p><p className="text-sm">{incoming.outboundSetup ? 'Connect your microphone and speakers, then dial the contact. Allow microphone access when prompted.' : 'Answer to speak with the caller. Allow microphone access when prompted.'}</p><Button size="sm" onClick={answer}>{incoming.outboundSetup ? 'Place outbound call' : 'Answer incoming call'}</Button><Button size="sm" variant="outline" onClick={()=>{Promise.resolve(incoming.reject()).catch(e=>setError(e.message));setIncoming(null);}}>Decline</Button></div>}</div>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}</div>;
+ const client=useRef(null),audio=useRef(null),generation=useRef(0),modeRef=useRef('offline');
+ const [status,setStatus]=useState('offline'),[mode,setMode]=useState('offline'),[incoming,setIncoming]=useState(null),[error,setError]=useState(null);
+ const presence=async value=>{modeRef.current=value;setMode(value);setOperatorMode(value);await api.telephonyAction(user,'set_availability',{status:value});};
+ useEffect(()=>{const timer=setInterval(()=>{if(client.current)api.telephonyAction(user,'set_availability',{status:modeRef.current}).catch(()=>{});},30000);return()=>{clearInterval(timer);generation.current++;clearActivePhoneConnection(client.current);client.current?.disconnect();client.current=null;setOperatorMode('offline');};},[user]);
+ const connect=async()=>{const current=++generation.current;setError(null);setStatus('connecting');try {
+  const permission=await navigator.mediaDevices.getUserMedia({audio:true});permission.getTracks().forEach(track=>track.stop());prepareRingback();
+  const session=await api.telephonyAction(user,'browser_session');
+  const connection=await createBrowserClient(session,{audio:audio.current,onIncoming:setIncoming,onState:value=>{setStatus(value);if(value==='active')presence('busy').catch(()=>{});else if(value==='available' && modeRef.current==='busy')presence('after_call_work').catch(()=>{});},onError:error=>{setError(error?.message || 'Phone connection lost. Re-enable outbound calls.');}});
+  if(current!==generation.current){connection.disconnect();return;}client.current=connection;await connection.connect();setActivePhoneConnection(connection);await presence('available');
+ }catch(error){client.current?.disconnect();clearActivePhoneConnection();client.current=null;setStatus('offline');setOperatorMode('offline');setError(error.message);}};
+ const disconnect=async()=>{if(hasActivePhoneCall()){setError('End the active call before going offline.');return;}generation.current++;clearActivePhoneConnection(client.current);client.current?.disconnect();client.current=null;setIncoming(null);setStatus('offline');await presence('offline');};
+ const answer=async()=>{try{await incoming.accept();setIncoming(null);setStatus('active');await presence('busy');await audio.current?.play();}catch(error){setError(error.message);}};
+ return <section className="rounded-lg border bg-card p-4 space-y-3" aria-label="Agent phone control panel"><audio ref={audio} autoPlay/><div className="flex flex-wrap gap-3 items-center"><strong>Agent phone control</strong><span>Phone: {status}</span><span>Status: {mode.replace(/_/g,' ')}</span><Button disabled={status==='connecting'} onClick={()=>{(client.current?disconnect():connect()).catch(error=>setError(error.message));}}>{client.current?'Go offline':status==='connecting'?'Enabling…':'Enable outbound calls'}</Button>{client.current && <select aria-label="Agent work status" value={mode==='busy'?'busy':mode} disabled={hasActivePhoneCall()} onChange={event=>presence(event.target.value).catch(error=>setError(error.message))}>{mode==='busy' && <option value="busy">On call</option>}{MODES.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select>}</div><p className="text-xs text-muted-foreground">Enable once per workspace session. Open a lead and click Call to dial. Standby, Do not disturb and Break pause outbound calling.</p>{incoming && <div role="alert"><strong>Incoming call</strong><Button onClick={answer}>Answer incoming call</Button><Button variant="outline" onClick={()=>{incoming.reject();setIncoming(null);}}>Decline</Button></div>}{error && <p role="alert" className="text-destructive">{error}</p>}</section>;
 }
