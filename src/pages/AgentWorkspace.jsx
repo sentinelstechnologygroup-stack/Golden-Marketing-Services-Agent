@@ -248,9 +248,9 @@ export function LeadContextPanel({ leadId, onSaved, callOnly = false, initialCon
               </Button>
               <Button size="sm" variant="destructive" disabled={controlBusy || callEnded} onClick={() => control(endCall)}><PhoneOff className="h-3.5 w-3.5 mr-1" />End call</Button>
               <Button size="sm" variant="outline" disabled={controlBusy || callEnded || !telephony?.warmTransferEnabled || ['starting','consulting','completed','completion_requested'].includes(transferStatus)} onClick={() => transfer('start_consultation')}><ArrowRightLeft className="h-3.5 w-3.5 mr-1" />Consult customer</Button>
-              {transferStatus === 'consulting' && <><Button size="sm" disabled={controlBusy} onClick={() => transfer('complete_transfer')}>Complete handoff</Button><Button size="sm" variant="outline" disabled={controlBusy} onClick={() => transfer('cancel_transfer')}>Cancel handoff</Button></>}
+              {transferStatus === 'consulting' && <><Button size="sm" disabled={controlBusy} onClick={() => transfer('complete_transfer')}>Complete handoff</Button><Button size="sm" variant="outline" disabled={controlBusy} onClick={() => transfer('skip_consultation')}>Try next recipient</Button><Button size="sm" variant="outline" disabled={controlBusy} onClick={() => transfer('cancel_transfer')}>Cancel handoff</Button></>}
               {callEnded && <Button size="sm" onClick={() => {setCall(null);setControlError(null);setTransferStatus(null);}}>New call</Button>}
-              {transferStatus && <Badge variant="outline">{transferStatus.replace(/_/g, ' ')}</Badge>}
+              {transferStatus==='exhausted' && <p className="text-xs">No available recipient answered. The lead is back with you; arrange a callback.</p>}{call?.handoffRecipientName && <span className="text-xs">Recipient: {call.handoffRecipientName}</span>}{transferStatus && <Badge variant="outline">{transferStatus.replace(/_/g, ' ')}</Badge>}
             </div>
           ) : (
             <Button onClick={startCall} disabled={callLoading || !lead.phone || telephony?.mode !== 'production'}>
