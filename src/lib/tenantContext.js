@@ -8,8 +8,9 @@ import { firebaseClient } from '@/api/firebaseClient';
  */
 
 export const ROLE_LABELS = {
+  ai_admin: 'AI Admin',
   admin: 'Administrator',
-  super_admin: 'Administrator',
+  super_admin: 'Super Admin',
   org_admin: 'Administrator',
   brand_admin: 'Administrator',
   supervisor: 'Supervisor',
@@ -22,6 +23,7 @@ export const ROLE_LABELS = {
 };
 
 export const ROLE_HIERARCHY = {
+  ai_admin: 60,
   admin: 100,
   super_admin: 100,
   org_admin: 100,

@@ -48,8 +48,8 @@ const ENTITY_COLLECTIONS = {
   Report: 'reports', AuditLog: 'auditLogs', User: 'members',
   Notification: 'notifications',
 };
-const roleMap = { admin: 'super_admin', gms_super_admin: 'super_admin', supervisor: 'supervisor', agent: 'lead_response_agent', auditor: 'auditor' };
-const agentRoles = new Set(['super_admin', 'supervisor', 'lead_response_agent', 'auditor']);
+const roleMap = { admin: 'super_admin', gms_super_admin: 'super_admin', supervisor: 'supervisor', agent: 'lead_response_agent', ai_admin: 'ai_admin', auditor: 'auditor' };
+const agentRoles = new Set(['super_admin', 'supervisor', 'lead_response_agent', 'ai_admin', 'auditor']);
 const ACTIVE_TENANT_KEY = 'gms-agent-active-tenant';
 const getTenantId = () => profile?.organization_id || null;
 
@@ -108,7 +108,8 @@ async function getProfile() {
 
 async function entityRows(entityName, filter = {}, sort = '', pageSize = 200) {
   const collectionName = ENTITY_COLLECTIONS[entityName];
-  if (!collectionName || collectionName === 'members') return [];
+  if (!collectionName) return [];
+  if (collectionName === 'members') return (await httpsCallable(functions, 'getGmsAgentTeam')({ tenantId: getTenantId() })).data.rows || [];
   const result = await httpsCallable(functions, 'getAgentCollection')({ tenantId: getTenantId(), collectionName, limit: pageSize });
   let rows = (result.data?.rows || []).map((row) => normalizeEntityRow(collectionName, row));
   rows = rows.filter((row) => Object.entries(filter || {}).every(([key, expected]) => expected && typeof expected === 'object' && '$in' in expected ? expected.$in.includes(row[key]) : expected == null || row[key] === expected));

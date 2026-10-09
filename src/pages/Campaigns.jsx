@@ -22,6 +22,7 @@ const STATUS_COLORS = {
 
 export default function Campaigns() {
   const { user } = useAuth();
+  const canEditCampaign = ['super_admin','admin','supervisor'].includes(user?.role);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -56,7 +57,7 @@ export default function Campaigns() {
           <p className="text-muted-foreground text-sm mt-1">Organize lead generation by brand and campaign</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button onClick={() => { setEditing(null); setShowDialog(true); }}><Plus className="h-4 w-4 mr-2" />New Campaign</Button>
+          {canEditCampaign && <Button onClick={() => { setEditing(null); setShowDialog(true); }}><Plus className="h-4 w-4 mr-2" />New Campaign</Button>}
           <TenantBadge tenant={data.campaigns.tenant} />
         </div>
       </div>
@@ -84,7 +85,7 @@ export default function Campaigns() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge className={`${STATUS_COLORS[c.status] || 'bg-slate-100'} border-0`}>{c.status}</Badge>
-                    <Button size="sm" variant="ghost" onClick={() => { setEditing(c); setShowDialog(true); }}><Pencil className="h-3.5 w-3.5" /></Button>
+                    {canEditCampaign && <Button size="sm" variant="ghost" onClick={() => { setEditing(c); setShowDialog(true); }}><Pencil className="h-3.5 w-3.5" /></Button>}
                   </div>
                 </div>
                 {c.description && <p className="text-sm text-muted-foreground mt-3">{c.description}</p>}

@@ -37,6 +37,8 @@ const NAV_GROUPS = [
   {
     label: 'Administration',
     items: [
+      { label: 'Agents & roles', path: '/agents', icon: Users, roles: ['super_admin', 'gms_super_admin'] },
+      { label: 'AI Workflows', path: '/campaigns', icon: Sparkles, roles: ['super_admin', 'ai_admin'] },
       { label: 'Clients', path: '/clients', icon: Building2, roles: ['super_admin', 'gms_super_admin'] },
       { label: 'Admin Portal', path: '/admin', icon: UserCog, roles: ['admin', 'super_admin', 'org_admin', 'brand_admin'] },
       { label: 'Phone Numbers', path: '/phone-numbers', icon: Phone, roles: null },
@@ -60,7 +62,11 @@ export default function Layout() {
   const isPreviewAccess = false;
   const tenantOptions = user?.tenantOptions || [];
 
-  const canSee = (item) => !item.roles || item.roles.includes(role);
+  const canSee = (item) => {
+    if (role === 'ai_admin' && !['/','/campaigns','/leads','/brands','/scripts','/qualification-forms','/lead-sources','/routing-rules','/phone-numbers'].includes(item.path)) return false;
+    if (role === 'ai_admin' && item.label === 'Campaigns') return false;
+    return !item.roles || item.roles.includes(role);
+  };
   const isActive = (item) => location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
   const currentItem = NAV_GROUPS.flatMap(group => group.items).find(isActive);
   const initials = (user?.full_name || user?.email || 'GMS Agent').split(/[\s@]+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join('');

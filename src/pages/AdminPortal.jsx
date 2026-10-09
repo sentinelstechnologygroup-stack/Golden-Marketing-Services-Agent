@@ -5,7 +5,7 @@ export default function AdminPortal() {
   const { user } = useAuth();
   const superAdmin = ['super_admin', 'gms_super_admin'].includes(user?.role);
   const links = [
-    ...(superAdmin ? [['/clients', 'Clients', 'Client directory, unified onboarding, connections, campaign approvals and shared files.']] : []),
+    ...(superAdmin ? [['/agents', 'Agents & roles', 'Create staff logins with predefined job authorities and configure agent phones.'], ['/clients', 'Clients', 'Client directory, unified onboarding, connections, campaign approvals and shared files.']] : []),
     ['/brands', 'Brands', 'View client brand configuration.'], ['/campaigns', 'Campaigns', 'Review programs and campaign activity.'],
     ['/lead-sources', 'Lead sources', 'Review acquisition sources.'], ['/scripts', 'Scripts & forms', 'Review agent scripts.'],
     ['/routing-rules', 'Routing rules', 'Review campaign-specific routing.'], ['/phone-numbers', 'Phone numbers', 'Review communications configuration.'],

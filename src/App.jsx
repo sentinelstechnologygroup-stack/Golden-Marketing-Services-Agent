@@ -32,9 +32,18 @@ import Settings from '@/pages/Settings';
 import Campaigns from '@/pages/Campaigns';
 import LeadSources from '@/pages/LeadSources';
 import AdminPortal from '@/pages/AdminPortal';
+import Agents from '@/pages/Agents';
 import Clients from '@/pages/Clients';
 import CRM from '@/pages/CRM';
 import { isAdminRole } from '@/lib/tenantContext';
+
+function StaffHome() {
+  const { user } = useAuth();
+  if (user?.role === 'ai_admin') return <Navigate to='/campaigns' replace />;
+  if (user?.role === 'lead_response_agent') return <Navigate to='/workspace' replace />;
+  if (user?.role === 'supervisor') return <Navigate to='/supervisor' replace />;
+  return <Home />;
+}
 
 function AdminPortalRoute() {
   const { user } = useAuth();
@@ -69,7 +78,7 @@ const AuthenticatedApp = () => {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route element={<Layout />}>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<StaffHome />} />
           <Route path="/workspace" element={<AgentWorkspace />} />
           <Route path="/supervisor" element={<SupervisorWorkspace />} />
           <Route path="/leads" element={<Leads />} />
@@ -85,6 +94,7 @@ const AuthenticatedApp = () => {
           <Route path="/settings" element={<Settings />} />
           <Route path="/campaigns" element={<Campaigns />} />
           <Route path="/lead-sources" element={<LeadSources />} />
+          <Route path="/agents" element={<Agents />} />
           <Route path="/admin" element={<AdminPortalRoute />} />
           <Route path="/clients" element={<ClientsRoute />} />
           <Route path="/crm" element={<CRM />} />
