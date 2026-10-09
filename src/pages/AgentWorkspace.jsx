@@ -225,7 +225,7 @@ export function LeadContextPanel({ leadId, onSaved, callOnly = false, initialCon
   if (!ctx) return null;
 
   const { lead, brand, campaign, script, form, calls, duplicates, lead_age_minutes } = ctx;
-  const callEnded = ['completed', 'failed', 'canceled', 'cancelled'].includes(call?.status);
+  const callEnded = (['completed', 'failed', 'canceled', 'cancelled','transferred'].includes(call?.status) || transferStatus==='completed');
   const recordingPolicy = telephony?.recordingPolicy || 'do_not_record';
 
   return (<Card className={telephony?.mode === 'production' ? 'border-emerald-300' : telephony?.mode === 'unavailable' ? 'border-rose-300 bg-rose-50' : 'border-amber-300'}>
@@ -247,7 +247,7 @@ export function LeadContextPanel({ leadId, onSaved, callOnly = false, initialCon
                 {call.status === 'on_hold' ? 'Resume' : 'Hold'}
               </Button>
               <Button size="sm" variant="destructive" disabled={controlBusy || callEnded} onClick={() => control(endCall)}><PhoneOff className="h-3.5 w-3.5 mr-1" />End call</Button>
-              <Button size="sm" variant="outline" disabled={controlBusy || callEnded || recordingPolicy === 'do_not_record' || transferStatus === 'consulting'} onClick={() => transfer('start_consultation')}><ArrowRightLeft className="h-3.5 w-3.5 mr-1" />Consult customer</Button>
+              <Button size="sm" variant="outline" disabled={controlBusy || callEnded || !telephony?.warmTransferEnabled || ['starting','consulting','completed','completion_requested'].includes(transferStatus)} onClick={() => transfer('start_consultation')}><ArrowRightLeft className="h-3.5 w-3.5 mr-1" />Consult customer</Button>
               {transferStatus === 'consulting' && <><Button size="sm" disabled={controlBusy} onClick={() => transfer('complete_transfer')}>Complete handoff</Button><Button size="sm" variant="outline" disabled={controlBusy} onClick={() => transfer('cancel_transfer')}>Cancel handoff</Button></>}
               {callEnded && <Button size="sm" onClick={() => {setCall(null);setControlError(null);setTransferStatus(null);}}>New call</Button>}
               {transferStatus && <Badge variant="outline">{transferStatus.replace(/_/g, ' ')}</Badge>}
