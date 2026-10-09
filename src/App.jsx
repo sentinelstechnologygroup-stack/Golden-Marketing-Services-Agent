@@ -32,6 +32,7 @@ import Settings from '@/pages/Settings';
 import Campaigns from '@/pages/Campaigns';
 import LeadSources from '@/pages/LeadSources';
 import AdminPortal from '@/pages/AdminPortal';
+import PasswordSetup from '@/pages/PasswordSetup';
 import Agents from '@/pages/Agents';
 import Clients from '@/pages/Clients';
 import CRM from '@/pages/CRM';
@@ -56,6 +57,8 @@ function ClientsRoute() {
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+
+  if (window.location.pathname === '/set-password') return <PasswordSetup />;
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return <PortalSplash pending />;
