@@ -239,15 +239,15 @@ export function LeadContextPanel({ leadId, onSaved, callOnly = false, initialCon
           )}
           {!call && telephony?.mode === 'production' && recordingPolicy === 'record_all' && <p className="text-xs text-amber-700">This Brand is configured to record calls. Read the approved recording disclosure before connecting.</p>}
           {!call && telephony?.mode === 'production' && recordingPolicy === 'do_not_record' && <p className="text-xs text-muted-foreground">Recording is disabled for this Brand.</p>}
-          {call && !callEnded ? (
+          {call && !callEnded && !call.conferenceReady && <p role="status" className="text-xs">Waiting for the contact to answer and join the call. Hold and handoff will become available after connection.</p>}{call && !callEnded ? (
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline">{({dialing_agent:'Connecting your browser',ringing:'Dialing contact',in_progress:'Connected',completed:'Call ended'})[call.status] || call.status || 'Connecting'}</Badge>
-              <Button size="sm" variant="outline" disabled={controlBusy || callEnded} onClick={() => control(toggleHold)}>
+              <Button size="sm" variant="outline" disabled={controlBusy || callEnded || !call.conferenceReady || !['in_progress','on_hold'].includes(call.status)} onClick={() => control(toggleHold)}>
                 {call.status === 'on_hold' ? <Play className="h-3.5 w-3.5 mr-1" /> : <Pause className="h-3.5 w-3.5 mr-1" />}
                 {call.status === 'on_hold' ? 'Resume' : 'Hold'}
               </Button>
               <Button size="sm" variant="destructive" disabled={controlBusy || callEnded} onClick={() => control(endCall)}><PhoneOff className="h-3.5 w-3.5 mr-1" />End call</Button>
-              <Button size="sm" variant="outline" disabled={controlBusy || callEnded || !telephony?.warmTransferEnabled || ['starting','consulting','completed','completion_requested'].includes(transferStatus)} onClick={() => transfer('start_consultation')}><ArrowRightLeft className="h-3.5 w-3.5 mr-1" />Consult customer</Button>
+              <Button size="sm" variant="outline" disabled={controlBusy || callEnded || !call.conferenceReady || !['in_progress','on_hold'].includes(call.status) || !telephony?.warmTransferEnabled || ['starting','consulting','completed','completion_requested'].includes(transferStatus)} onClick={() => transfer('start_consultation')}><ArrowRightLeft className="h-3.5 w-3.5 mr-1" />Consult customer</Button>
               {transferStatus === 'consulting' && <><Button size="sm" disabled={controlBusy} onClick={() => transfer('complete_transfer')}>Complete handoff</Button><Button size="sm" variant="outline" disabled={controlBusy} onClick={() => transfer('skip_consultation')}>Try next recipient</Button><Button size="sm" variant="outline" disabled={controlBusy} onClick={() => transfer('cancel_transfer')}>Cancel handoff</Button></>}
               {callEnded && <Button size="sm" onClick={() => {setCall(null);setControlError(null);setTransferStatus(null);}}>New call</Button>}
               {transferStatus==='exhausted' && <p className="text-xs">No available recipient answered. The lead is back with you; arrange a callback.</p>}{call?.handoffRecipientName && <span className="text-xs">Recipient: {call.handoffRecipientName}</span>}{transferStatus && <Badge variant="outline">{transferStatus.replace(/_/g, ' ')}</Badge>}
