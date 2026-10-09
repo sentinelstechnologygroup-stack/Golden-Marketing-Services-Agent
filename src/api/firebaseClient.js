@@ -169,7 +169,7 @@ export const firebaseClient = {
     },
     logout: async () => { profile = null; await signOut(auth); },
     redirectToLogin: () => { window.location.assign('/login'); },
-    resetPasswordRequest: async (email) => sendPasswordResetEmail(auth, email.trim()),
+    resetPasswordRequest: async (email) => sendPasswordResetEmail(auth, email.trim(), { url: 'https://agentcrm.goldenmarketingservices.com/login', handleCodeInApp: false }),
     resetPassword: async () => { throw new Error('Use the Firebase password-reset link.'); },
     register: async () => { throw new Error('CRM access is invitation-only.'); },
     verifyOtp: async () => { throw new Error('CRM access is invitation-only.'); },
