@@ -54,4 +54,13 @@ assert.equal(appointmentWrite.brandId, 'brand-golden-cross-realty');
 assert.equal(appointmentWrite.scheduledStart, '2026-09-22T15:00:00.000Z');
 assert.equal(appointmentWrite.calendarProvider, 'internal');
 
+const qualification = normalizeEntityRow('qualificationForms', {
+  status: 'draft', qualificationThreshold: 70,
+  fields: [{id: 'question-1', label: 'Confirm the inquiry', type: 'text', required: true}],
+});
+assert.equal(qualification.questions[0].label, 'Confirm the inquiry');
+assert.equal(qualification.questions[0].field_type, 'text');
+assert.equal(qualification.questions[0].score_weight, 0);
+assert.equal(qualification.qualification_threshold, 70);
+assert.equal(normalizeEntityRow('scripts', {version: 13, body: 'Phone script'}).version_number, 13);
 console.log('Agent Firebase entity contract aliases: PASS');
