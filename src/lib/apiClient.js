@@ -76,13 +76,14 @@ export const api = {
   // ---------- 1. Agent Workspace ----------
   getAgentWorkspace: (user) => guard(async () => {
     const filter = scopeByOrg(user);
-    const [newLeads, callbacks, followUps, brands, campaigns, recentLeads] = await Promise.all([
+    const [newLeads, callbacks, followUps, brands, campaigns, recentLeads, inboundCalls] = await Promise.all([
       firebaseClient.entities.Lead.filter({ ...filter, lead_status: 'new', contact_attempts: 0 }, '-created_date', 100),
       firebaseClient.entities.FollowUpTask.filter({ ...filter, task_type: 'callback_reminder', status: 'pending' }, 'due_date', 100),
       firebaseClient.entities.FollowUpTask.filter({ ...filter, status: 'pending' }, 'due_date', 100),
       firebaseClient.entities.Brand.filter(scopeByOrg(user), '-created_date', 50),
       firebaseClient.entities.Campaign.filter(scopeByOrg(user), '-created_date', 50),
       firebaseClient.entities.Lead.filter(filter, '-created_date', 500),
+      firebaseClient.entities.CallRecord.filter({...filter,direction:'inbound'},'-call_start',500),
     ]);
     const scopedNew = applyBrandScope(user, newLeads);
     const scopedCb = applyBrandScope(user, callbacks);
@@ -98,6 +99,7 @@ export const api = {
       reconnect_leads: listResponse(user, applyBrandScope(user, recentLeads).filter(l => !scopedNew.some(n => n.id === l.id))),
       callback_queue: listResponse(user, scopedCb),
       follow_up_queue: listResponse(user, scopedFu),
+      voicemail_queue: listResponse(user, applyBrandScope(user,inboundCalls).filter(c=>c.callKind==='voicemail' || !c.agentUid && c.recordingStatus==='archived').map(c=>({...c,customer_name:scopedBrands.find(b=>b.id===c.brand_id)?.display_name || 'Assigned customer',contact:recentLeads.find(l=>l.id===c.lead_id) || null}))),
     };
   }),
 
@@ -454,6 +456,7 @@ export const api = {
     const filter = scopeByOrg(user);
     const [leads, brands, agents] = await Promise.all([
       firebaseClient.entities.Lead.filter(filter, '-created_date', 500),
+      firebaseClient.entities.CallRecord.filter({...filter,direction:'inbound'},'-call_start',500),
       firebaseClient.entities.Brand.filter(filter, '-created_date', 50),
       firebaseClient.entities.User.list(100),
     ]);
