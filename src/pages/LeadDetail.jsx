@@ -267,6 +267,12 @@ export default function LeadDetail({leadId, embedded = false, onSaved, onClose})
         </CardContent>
       </Card>
 
+      <Card><CardHeader><CardTitle className="text-base">Voicemail &amp; Call Recordings</CardTitle></CardHeader><CardContent className="space-y-4">
+        <Button size="sm" variant="outline" onClick={loadAll}>Refresh recordings</Button>
+        {calls.filter(c=>c.recordingStatus==='archived').length===0 && <p className="text-sm text-muted-foreground">No archived recordings are available for this lead yet.</p>}
+        {calls.filter(c=>c.recordingStatus==='archived').map(c=><div key={c.id} className="rounded-lg border p-3 space-y-2"><p className="text-sm font-semibold">{c.callKind==='voicemail' || c.direction==='inbound' && !c.agentUid?'Voicemail':'Call recording'} · {callDate(c.call_start || c.created_date || c.createdAt)}</p><CallRecordingAccess callId={c.id} autoLoad /></div>)}
+      </CardContent></Card>
+
       <Card className="border-primary/30">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> GMS Qualification Gate</CardTitle>

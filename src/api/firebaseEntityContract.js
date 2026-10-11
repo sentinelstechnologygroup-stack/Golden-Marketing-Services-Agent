@@ -83,6 +83,7 @@ export function normalizeEntityRow(collectionName, value) {
   row.created_date ??= asIsoDate(row.createdAt) || row.created_date;
   row.updated_date ??= asIsoDate(row.updatedAt) || row.updated_date;
   row.received_date ??= asIsoDate(row.receivedAt) || row.received_date;
+  if (collectionName === 'callRecords') row.call_start = asIsoDate(row.startedAt || row.call_start) || row.created_date;
   if (collectionName === 'leads') {
     row.status ??= row.lead_status;
     row.lead_status ??= row.status;
