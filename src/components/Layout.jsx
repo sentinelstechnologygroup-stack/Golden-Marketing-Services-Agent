@@ -1,3 +1,4 @@
+import AgentPhoneConnection from '@/components/AgentPhoneConnection';
 import DesktopInstallButton from '@/components/DesktopInstallButton';
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
@@ -202,6 +203,7 @@ export default function Layout() {
         <main className="min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 xl:px-10">
             {isPreviewAccess && <div role="status" className="mb-5 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-900">PREVIEW ONLY: CRM data and actions are not confirmed live. Do not enter real customer information.</div>}
+            {['super_admin','lead_response_agent','supervisor','agent','gms_super_admin'].includes(role) && <div className="mb-6"><AgentPhoneConnection key={`${user?.id}:${user?.organization_id}`} user={user} onAccepted={leadId=>navigate(`/workspace?leadId=${encodeURIComponent(leadId)}`)} /></div>}
             <Outlet />
           </div>
         </main>

@@ -1,7 +1,6 @@
 import FinancingDetails from '@/components/leads/FinancingDetails';
 import { computeQualificationStatus as computeQualStatus } from '@/lib/qualificationStatus';
 import CallRecordingAccess from '@/components/CallRecordingAccess';
-import AgentPhoneConnection from '@/components/AgentPhoneConnection';
 import { LeadContextPanel } from '@/pages/AgentWorkspace';
 import QualField from '@/components/leads/QualificationField';
 import React, { useEffect, useState } from 'react';
@@ -26,7 +25,7 @@ const STATUS_COLORS = {
   unqualified: 'bg-rose-100 text-rose-700', closed: 'bg-slate-100 text-slate-700', lost: 'bg-rose-100 text-rose-700',
 };
 
-export default function LeadDetail({leadId, embedded = false, onSaved}) {
+export default function LeadDetail({leadId, embedded = false, onSaved, onClose}) {
   const { id: routeId } = useParams();
   const id = leadId || routeId;
   const navigate = useNavigate();
@@ -244,11 +243,10 @@ export default function LeadDetail({leadId, embedded = false, onSaved}) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/leads')}><ArrowLeft className="h-4 w-4 mr-1" /> Inbox</Button>
+        <Button variant="ghost" size="sm" onClick={() => embedded ? onClose?.() : navigate(user?.role==='lead_response_agent'?'/workspace':'/leads')}><ArrowLeft className="h-4 w-4 mr-1" /> {embedded || user?.role==='lead_response_agent'?'Back to workspace':'Inbox'}</Button>
       </div>
 
       {/* Pre-call context banner */}
-      {!embedded && <AgentPhoneConnection user={user} />}
       <Card className="border-l-4 border-l-primary">
         <CardContent className="p-4 space-y-1 grid gap-3 md:grid-cols-[minmax(0,1fr)_16rem]">
           <div className="md:col-start-2 md:row-start-1 md:row-span-5"><LeadContextPanel key={id} leadId={id} callOnly initialContext={{lead,brand,campaign,script,form:qualForm,calls,duplicates:[],lead_age_minutes:0}} /></div>

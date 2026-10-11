@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import React, { useEffect, useState } from 'react';
 import { setRingback } from '@/lib/telephony/ringback';
 import { useSearchParams } from 'react-router-dom';
-import AgentPhoneConnection from '@/components/AgentPhoneConnection';
 import { placeBrowserCall, expectOutboundSetup, clearOutboundSetup, hasActivePhoneCall, canPlaceCall, getInboundCall } from '@/lib/telephony/browserClient';
 import { EmptyDataTable } from '@/components/CollectionStructure';
 import { api, ApiError } from '@/lib/apiClient';
@@ -26,6 +25,7 @@ function ageLabel(min) {
 export default function AgentWorkspace() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [queueView,setQueueView]=useState(null);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -66,15 +66,15 @@ export default function AgentWorkspace() {
 
 
 
-      <AgentPhoneConnection user={user} onAccepted={leadId => setSelectedLeadId(leadId)} />
 
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-        <StatCard label="New Leads" value={data.new_leads.count} icon={AlertCircle} accent="bg-blue-50 text-blue-600" />
-        <StatCard label="Callbacks Due" value={data.callback_queue.count} icon={Clock} accent="bg-amber-50 text-amber-600" />
-        <StatCard label="Follow-ups" value={data.follow_up_queue.count} icon={Phone} accent="bg-purple-50 text-purple-600" />
-        <StatCard label="Assigned Brands" value={data.assigned_brands.length} icon={Headphones} accent="bg-emerald-50 text-emerald-600" />
+        <StatCard label="New Leads" onClick={()=>{setQueueView('new');load(false);}} value={data.new_leads.count} icon={AlertCircle} accent="bg-blue-50 text-blue-600" />
+        <StatCard label="Callbacks Due" onClick={()=>{setQueueView('callbacks');load(false);}} value={data.callback_queue.count} icon={Clock} accent="bg-amber-50 text-amber-600" />
+        <StatCard label="Follow-ups" onClick={()=>{setQueueView('followups');load(false);}} value={data.follow_up_queue.count} icon={Phone} accent="bg-purple-50 text-purple-600" />
+        <StatCard label="Assigned Brands" onClick={()=>{setQueueView('brands');load(false);}} value={data.assigned_brands.length} icon={Headphones} accent="bg-emerald-50 text-emerald-600" />
       </div>
 
+      <Dialog open={Boolean(queueView)} onOpenChange={open=>{if(!open)setQueueView(null);}}><DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto"><DialogTitle>{({new:'New leads',callbacks:'Callbacks due',followups:'Follow-ups',brands:'Assigned brands'})[queueView]}</DialogTitle><div className="space-y-2">{(queueView==='new'?data.new_leads.items:queueView==='callbacks'?data.callback_queue.items:queueView==='followups'?data.follow_up_queue.items:data.assigned_brands).map(row=><button key={row.id} className="w-full rounded-lg border p-3 text-left hover:bg-accent" onClick={()=>{const id=row.lead_id || row.leadId || (queueView==='new'?row.id:null);if(id){setQueueView(null);setSelectedLeadId(id);}}}><strong>{queueView==='brands'?(row.display_name || row.name):queueView==='new'?`${row.first_name} ${row.last_name || ''}`:(row.title || row.task_type?.replace(/_/g,' ') || 'Follow-up')}</strong>{queueView!=='brands' && <p className="text-sm">{row.phone || row.notes || row.description || ''}</p>}</button>)}{(queueView==='new'?data.new_leads.items:queueView==='callbacks'?data.callback_queue.items:queueView==='followups'?data.follow_up_queue.items:data.assigned_brands).length===0 && <p>No items are waiting.</p>}</div></DialogContent></Dialog>
       <div className="grid gap-6 md:grid-cols-2">
         {/* Queue list */}
         <Card className="h-full">
@@ -107,7 +107,7 @@ export default function AgentWorkspace() {
         {data.reconnect_leads?.count > 0 && <Card className="h-full"><CardHeader><CardTitle className="text-base">Previously contacted · call again</CardTitle></CardHeader><CardContent className="space-y-2">{data.reconnect_leads.items.map(lead => <Button key={lead.id} variant="outline" className="w-full h-auto min-h-20 justify-start whitespace-normal text-left p-4" onClick={() => setSelectedLeadId(lead.id)}>{lead.first_name} {lead.last_name || ''} · {String(lead.lead_status || 'Follow up').replace(/_/g,' ')}</Button>)}</CardContent></Card>}
 
       </div>
-      <Dialog open={Boolean(selectedLeadId)} onOpenChange={open => {if (!open) {if (hasActivePhoneCall()) {toast({title:'End the active call before closing the lead.'});return;}setSelectedLeadId(null);window.history.replaceState(null,'', '/workspace');}}}><DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto"><DialogTitle>Lead record</DialogTitle>{selectedLeadId && <LeadDetail leadId={selectedLeadId} embedded onSaved={() => load(false)} />}</DialogContent></Dialog>
+      <Dialog open={Boolean(selectedLeadId)} onOpenChange={open => {if (!open) {if (hasActivePhoneCall()) {toast({title:'End the active call before closing the lead.'});return;}setSelectedLeadId(null);window.history.replaceState(null,'', '/workspace');}}}><DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto"><DialogTitle>Lead record</DialogTitle>{selectedLeadId && <LeadDetail leadId={selectedLeadId} embedded onClose={()=>{if(hasActivePhoneCall()){toast({title:'End the active call before closing the lead.'});return;}setSelectedLeadId(null);window.history.replaceState(null,'','/workspace');}} onSaved={() => load(false)} />}</DialogContent></Dialog>
     </div>
   );
 }
@@ -268,12 +268,12 @@ export function LeadContextPanel({ leadId, onSaved, callOnly = false, initialCon
 
 }
 
-function StatCard({ label, value, icon: Icon, accent }) {
+function StatCard({ label, value, icon: Icon, accent, onClick }) {
   return (
-    <Card><CardContent className="p-4 flex items-center justify-between">
+    <button onClick={onClick} className="w-full text-left rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" aria-label={`Open ${label}`}><Card><CardContent className="p-4 flex items-center justify-between">
       <div><p className="text-xs text-muted-foreground">{label}</p><p className="text-2xl font-heading font-semibold mt-1">{value}</p></div>
       <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${accent}`}><Icon className="h-5 w-5" /></div>
-    </CardContent></Card>
+    </CardContent></Card></button>
   );
 }
 
