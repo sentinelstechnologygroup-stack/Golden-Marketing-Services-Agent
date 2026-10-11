@@ -192,7 +192,7 @@ export const api = {
       call_start: now, call_end: now, duration_seconds: 0,
       notes, disposition, next_action, provider_mode,
     });
-    const statusMap = { connected: 'connected', qualified: 'qualified', unqualified: 'unqualified', warm_transfer_completed: 'warm_transfer', appointment_booked: 'appointment_scheduled', closed: 'closed', lost: 'lost', duplicate: 'duplicate', do_not_call: 'do_not_call' };
+    const statusMap = { connected: 'contacted', qualified: 'qualified', unqualified: 'unqualified', warm_transfer_completed: 'handed_off', appointment_booked: 'appointment_scheduled', closed: 'closed', lost: 'lost', duplicate: 'duplicate', do_not_call: 'do_not_call' };
     const updated = await firebaseClient.functions.invoke('transitionLead', {
       leadId: lead.id,
       status: statusMap[disposition] || 'contacted',
