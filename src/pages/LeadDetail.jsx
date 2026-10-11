@@ -315,11 +315,13 @@ export default function LeadDetail({leadId, embedded = false, onSaved}) {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Script */}
         <Card>
-          <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileText className="h-4 w-4" /> Approved Script</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileText className="h-4 w-4" /> Phone-Agent Script</CardTitle></CardHeader>
           <CardContent className="space-y-3 text-sm">
             {script ? (
               <>
                 <div><span className="text-muted-foreground">Script:</span> {script.name} (v{script.version_number})</div>
+                {!["approved", "active"].includes(script.status) && <p className="rounded bg-amber-50 p-3 text-amber-800">Draft for broker review. Live outreach requires approval of this campaign and its qualification criteria.</p>}
+                {script.body && <p className="whitespace-pre-wrap rounded bg-muted p-3">{script.body}</p>}
                 {script.opening_statement && <div className="p-3 rounded bg-muted"><span className="font-medium">Opening: </span>{script.opening_statement}</div>}
                 {script.qualification_questions && <div><span className="text-muted-foreground">Qualification questions:</span><p className="whitespace-pre-wrap mt-1">{script.qualification_questions}</p></div>}
                 {script.objection_responses && <div><span className="text-muted-foreground">Objection responses:</span><p className="whitespace-pre-wrap mt-1">{script.objection_responses}</p></div>}

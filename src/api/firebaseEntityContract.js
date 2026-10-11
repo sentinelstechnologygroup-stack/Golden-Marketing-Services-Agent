@@ -94,6 +94,14 @@ export function normalizeEntityRow(collectionName, value) {
     row.display_name ??= row.displayName || row.name;
     row.name ??= row.display_name;
   }
+  if (collectionName === 'qualificationForms') {
+    row.questions = (row.questions || row.fields || []).map((q, index) => ({
+      ...q, id: q.id || `question-${index + 1}`, label: q.label || q.question || q.text || '',
+      field_type: q.field_type || q.type || 'text', score_weight: q.score_weight ?? q.weight ?? 0,
+    }));
+    row.qualification_threshold ??= row.qualificationThreshold;
+  }
+  if (collectionName === 'scripts') row.version_number ??= row.version;
   if (collectionName === 'leadSources') row.source_type ??= row.type;
   if (collectionName === 'campaigns') {
     row.start_date ??= row.startDate;
