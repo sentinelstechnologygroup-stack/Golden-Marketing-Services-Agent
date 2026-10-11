@@ -34,6 +34,7 @@ import LeadSources from '@/pages/LeadSources';
 import AdminPortal from '@/pages/AdminPortal';
 import PasswordSetup from '@/pages/PasswordSetup';
 import Agents from '@/pages/Agents';
+import CallCenterReports from '@/pages/CallCenterReports';
 import Clients from '@/pages/Clients';
 import CRM from '@/pages/CRM';
 import { isAdminRole } from '@/lib/tenantContext';
@@ -83,6 +84,7 @@ const AuthenticatedApp = () => {
         <Route element={<Layout />}>
           <Route path="/" element={<StaffHome />} />
           <Route path="/workspace" element={<AgentWorkspace />} />
+          <Route path="/call-center-reports" element={<CallCenterReports />} />
           <Route path="/supervisor" element={<SupervisorWorkspace />} />
           <Route path="/leads" element={<Leads />} />
           <Route path="/leads/:id" element={<LeadDetail />} />
