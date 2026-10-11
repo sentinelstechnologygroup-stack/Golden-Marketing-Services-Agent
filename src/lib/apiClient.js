@@ -78,7 +78,7 @@ export const api = {
     const filter = scopeByOrg(user);
     const [newLeads, callbacks, followUps, brands, campaigns, recentLeads, inboundCalls] = await Promise.all([
       firebaseClient.entities.Lead.filter({ ...filter, lead_status: 'new', contact_attempts: 0 }, '-created_date', 100),
-      firebaseClient.entities.FollowUpTask.filter({ ...filter, task_type: 'callback_reminder', status: 'pending' }, 'due_date', 100),
+      firebaseClient.entities.FollowUpTask.filter({ ...filter, task_type: 'callback_reminder' }, 'due_date', 500),
       firebaseClient.entities.FollowUpTask.filter({ ...filter, status: 'pending' }, 'due_date', 100),
       firebaseClient.entities.Brand.filter(scopeByOrg(user), '-created_date', 50),
       firebaseClient.entities.Campaign.filter(scopeByOrg(user), '-created_date', 50),
@@ -86,7 +86,8 @@ export const api = {
       firebaseClient.entities.CallRecord.filter({...filter,direction:'inbound'},'-call_start',500),
     ]);
     const scopedNew = applyBrandScope(user, newLeads);
-    const scopedCb = applyBrandScope(user, callbacks);
+    const allCallbacks=applyBrandScope(user,callbacks);
+    const scopedCb = allCallbacks.filter(t=>t.status==='pending');
     const scopedFu = applyBrandScope(user, followUps);
     const scopedBrands = applyBrandScope(user, brands);
     const scopedCampaigns = applyBrandScope(user, campaigns);
@@ -99,7 +100,7 @@ export const api = {
       reconnect_leads: listResponse(user, applyBrandScope(user, recentLeads).filter(l => !scopedNew.some(n => n.id === l.id))),
       callback_queue: listResponse(user, scopedCb),
       follow_up_queue: listResponse(user, scopedFu),
-      voicemail_queue: listResponse(user, applyBrandScope(user,inboundCalls).filter(c=>c.callKind==='voicemail' || !c.agentUid && c.recordingStatus==='archived').map(c=>({...c,customer_name:scopedBrands.find(b=>b.id===c.brand_id)?.display_name || 'Assigned customer',contact:recentLeads.find(l=>l.id===c.lead_id) || null}))),
+      voicemail_queue: listResponse(user, applyBrandScope(user,inboundCalls).filter(c=>c.callKind==='voicemail' || !c.agentUid && c.recordingStatus==='archived').filter(c=>!allCallbacks.some(t=>(t.callId===c.id || t.id===`inbound_${c.id}`) && t.status==='completed')).map(c=>({...c,waitingSince:allCallbacks.find(t=>t.callId===c.id || t.id===`inbound_${c.id}`)?.created_date || c.created_date,customer_name:scopedBrands.find(b=>b.id===c.brand_id)?.display_name || 'Assigned customer',contact:recentLeads.find(l=>l.id===c.lead_id) || null}))),
     };
   }),
 

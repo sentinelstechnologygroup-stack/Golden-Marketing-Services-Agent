@@ -232,6 +232,9 @@ export default function LeadDetail({leadId, embedded = false, onSaved, onClose})
     }
   };
 
+  const pendingCallbacks=tasks.filter(t=>t.task_type==='callback_reminder' && t.status==='pending');
+  const [completingTask,setCompletingTask]=useState(null);
+  const completeCallback=async task=>{setCompletingTask(task.id);try{await firebaseClient.entities.FollowUpTask.update(task.id,{status:'completed'});await loadAll();onSaved?.();toast({title:'Callback marked completed'});}catch(error){toast({title:'Could not complete callback',description:error.message,variant:'destructive'});}finally{setCompletingTask(null);}};
   const latestVoicemail = calls.find(c=>c.recordingStatus==='archived' && (c.callKind==='voicemail' || c.direction==='inbound' && !c.agentUid));
 
   if (loading) {
@@ -268,6 +271,8 @@ export default function LeadDetail({leadId, embedded = false, onSaved, onClose})
           )}
         </CardContent>
       </Card>
+
+      {pendingCallbacks.length>0 && <Card className="border-amber-400 bg-amber-50"><CardContent className="p-4 space-y-2"><h3 className="font-semibold">Callback required ({pendingCallbacks.length})</h3><p className="text-sm">{brand?.display_name || brand?.name} · {lead.phone}. Use the call controls above to return the call; mark the task completed after handling it.</p><div className="max-h-40 overflow-y-auto space-y-2">{pendingCallbacks.map(task=><div key={task.id} className="flex flex-wrap justify-between gap-2 border-t pt-2"><div><p className="text-sm">{task.notes || task.title || 'Return requested call'}</p><p className="text-xs">Received {callDate(task.created_date || task.createdAt)} · Due {callDate(task.due_date || task.dueAt)}</p></div><Button size="sm" variant="outline" disabled={Boolean(completingTask)} onClick={()=>completeCallback(task)}>{completingTask===task.id?'Saving…':'Mark callback completed'}</Button></div>)}</div></CardContent></Card>}
 
       {latestVoicemail && <Card><CardContent className="p-4 flex flex-wrap items-center justify-between gap-3">
         <div><h3 className="text-sm font-semibold">Latest voicemail</h3><p className="text-xs text-muted-foreground">{callDate(latestVoicemail.call_start || latestVoicemail.created_date || latestVoicemail.createdAt)}</p></div>
@@ -403,14 +408,14 @@ export default function LeadDetail({leadId, embedded = false, onSaved, onClose})
       <div className="grid gap-6 lg:grid-cols-3">
         <Card id="lead-call-history" tabIndex={-1} className="scroll-mt-24">
           <CardHeader><CardTitle className="text-sm">Call History &amp; Recordings</CardTitle></CardHeader>
-          <CardContent className="space-y-2 text-sm">
+          <CardContent className="space-y-2 text-sm max-h-80 overflow-y-auto">
             {calls.length === 0 ? <p className="text-muted-foreground">No calls yet.</p> :
-              calls.map(c => <details key={c.id} className="border border-border rounded p-2"><summary className="cursor-pointer"><Badge variant="outline">{String(c.disposition || c.status || 'Call').replace(/_/g,' ')}</Badge> <span className="text-xs text-muted-foreground">{callDate(c.call_start || c.created_date || c.createdAt)}</span></summary><div className="mt-2 text-sm space-y-1"><p>{c.notes || 'No notes recorded.'}</p><p>Duration: {c.duration_seconds ?? 'Not available'} seconds</p><p>Call reference: {c.id}</p><p>{c.direction==='inbound'?'Inbound call':'Outbound / logged call'}</p><CallRecordingAccess callId={c.id} /></div></details>)}
+              calls.map(c => <details key={c.id} className="border border-border rounded p-2"><summary className="cursor-pointer"><Badge variant="outline">{String(c.callbackRequestedAt?'Callback requested':c.disposition || c.status || 'Call').replace(/_/g,' ')}</Badge> <span className="text-xs text-muted-foreground">{callDate(c.call_start || c.created_date || c.createdAt)}</span></summary><div className="mt-2 text-sm space-y-1"><p>{c.notes || 'No notes recorded.'}</p><p>Duration: {c.duration_seconds ?? 'Not available'} seconds</p><p>Call reference: {c.id}</p><p>{c.direction==='inbound'?'Inbound call':'Outbound / logged call'}</p><CallRecordingAccess callId={c.id} /></div></details>)}
           </CardContent>
         </Card>
         <Card>
           <CardHeader><CardTitle className="text-sm">Follow-up Tasks</CardTitle></CardHeader>
-          <CardContent className="space-y-2 text-sm">
+          <CardContent className="space-y-2 text-sm max-h-80 overflow-y-auto">
             {tasks.length === 0 ? <p className="text-muted-foreground">No tasks.</p> :
               tasks.map(t => <div key={t.id} className="border border-border rounded p-2"><div className="flex justify-between"><span className="font-medium">{t.task_type.replace(/_/g, ' ')}</span><Badge variant="outline">{t.status}</Badge></div><span className="text-xs text-muted-foreground">Due {new Date(t.due_date).toLocaleString()}</span></div>)}
           </CardContent>

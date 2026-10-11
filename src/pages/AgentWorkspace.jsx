@@ -1,7 +1,7 @@
 import CallRecordingAccess from '@/components/CallRecordingAccess';
 import LeadDetail from '@/pages/LeadDetail';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { setRingback } from '@/lib/telephony/ringback';
 import { useSearchParams } from 'react-router-dom';
 import { placeBrowserCall, expectOutboundSetup, clearOutboundSetup, hasActivePhoneCall, canPlaceCall, getInboundCall } from '@/lib/telephony/browserClient';
@@ -17,6 +17,7 @@ import { Phone, Clock, AlertCircle, Headphones, PhoneCall, PhoneOff, Pause, Play
 
 const DISPOSITIONS = ['attempted', 'no_answer', 'voicemail_left', 'connected', 'qualified', 'unqualified', 'duplicate', 'wrong_number', 'do_not_call', 'warm_transfer_completed', 'appointment_booked', 'follow_up_required', 'closed', 'lost'];
 
+function waitingLabel(row){const received=Date.parse(row.waitingSince || row.created_date || row.createdAt || '');return Number.isFinite(received)?ageLabel(Math.max(0,Math.floor((Date.now()-received)/60000))):'Not collected';}
 function ageLabel(min) {
   if (min < 60) return `${min}m`;
   if (min < 1440) return `${Math.floor(min / 60)}h`;
@@ -26,6 +27,13 @@ function ageLabel(min) {
 export default function AgentWorkspace() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const reviewKey=`gms-workspace-reviewed:${user?.id}:${user?.organization_id}`;
+  const [reviewed,setReviewed]=useState({});
+  const fetching=useRef(false);
+  useEffect(()=>{try{setReviewed(JSON.parse(localStorage.getItem(reviewKey)) || {});}catch{setReviewed({});}},[reviewKey]);
+  const itemKey=(kind,row)=>`${kind}:${row.id}`;
+  const acknowledge=(kind,row)=>setReviewed(previous=>{const next={...previous,[itemKey(kind,row)]:true,...(['callbacks','followups'].includes(kind)?{[itemKey('callbacks',row)]:true,[itemKey('followups',row)]:true}:{})};try{localStorage.setItem(reviewKey,JSON.stringify(next));}catch{/* Review still works for this session. */}return next;});
+  const unread=(kind,items)=>(items || []).filter(row=>!reviewed[itemKey(kind,row)]).length;
   const [queueView,setQueueView]=useState(null);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,6 +43,7 @@ export default function AgentWorkspace() {
   useEffect(() => { if (searchParams.get('leadId')) setSelectedLeadId(searchParams.get('leadId')); }, [searchParams]);
 
   const load = async (showSpinner = true) => {
+    if(fetching.current)return;fetching.current=true;
     if(showSpinner) setLoading(true); setError(null);
     try {
       const ws = await api.getAgentWorkspace(user);
@@ -43,11 +52,11 @@ export default function AgentWorkspace() {
     } catch (e) {
       setError(e);
     } finally {
-      setLoading(false);
+      setLoading(false);fetching.current=false;
     }
   };
 
-  useEffect(() => { load(); }, [user]);
+  useEffect(() => { load();const timer=setInterval(()=>load(false),20000);const refresh=()=>load(false);window.addEventListener('focus',refresh);return()=>{clearInterval(timer);window.removeEventListener('focus',refresh);}; }, [user]);
 
   if (loading) return <Spinner />;
   if (error) return error instanceof ApiError && (error.status === 401 || error.status === 403)
@@ -68,15 +77,16 @@ export default function AgentWorkspace() {
 
 
 
+      <p className="text-xs text-muted-foreground">Workspace is your call-handling home. New badges show items you have not opened on this device; opening a contact does not complete its tasks. Queues refresh automatically.</p>
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
         <StatCard label="New Leads" onClick={()=>{setQueueView('new');load(false);}} value={data.new_leads.count} icon={AlertCircle} accent="bg-blue-50 text-blue-600" />
-        <StatCard label="Callbacks Due" onClick={()=>{setQueueView('callbacks');load(false);}} value={data.callback_queue.count} icon={Clock} accent="bg-amber-50 text-amber-600" />
-        <StatCard label="Follow-ups" onClick={()=>{setQueueView('followups');load(false);}} value={data.follow_up_queue.count} icon={Phone} accent="bg-purple-50 text-purple-600" />
+        <StatCard newCount={unread('callbacks',data.callback_queue?.items)} label="Callbacks Due" onClick={()=>{setQueueView('callbacks');load(false);}} value={data.callback_queue.count} icon={Clock} accent="bg-amber-50 text-amber-600" />
+        <StatCard newCount={unread('followups',data.follow_up_queue?.items)} label="Follow-ups" onClick={()=>{setQueueView('followups');load(false);}} value={data.follow_up_queue.count} icon={Phone} accent="bg-purple-50 text-purple-600" />
         <StatCard label="Assigned Brands" onClick={()=>{setQueueView('brands');load(false);}} value={data.assigned_brands.length} icon={Headphones} accent="bg-emerald-50 text-emerald-600" />
-        <StatCard label="Voicemails" onClick={()=>{setQueueView('voicemails');load(false);}} value={data.voicemail_queue?.count || 0} icon={PhoneCall} accent="bg-rose-50 text-rose-600" />
+        <StatCard newCount={unread('voicemails',data.voicemail_queue?.items)} label="Voicemails" onClick={()=>{setQueueView('voicemails');load(false);}} value={data.voicemail_queue?.count || 0} icon={PhoneCall} accent="bg-rose-50 text-rose-600" />
       </div>
 
-      <Dialog open={Boolean(queueView)} onOpenChange={open=>{if(!open)setQueueView(null);}}><DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto"><DialogTitle>{({new:'New leads',callbacks:'Callbacks due',followups:'Follow-ups',brands:'Assigned brands',voicemails:'Voicemails by customer'})[queueView]}</DialogTitle>{queueView==='voicemails'?<div className="space-y-5">{[...new Set((data.voicemail_queue?.items || []).map(c=>c.brand_id))].map(brandId=><section key={brandId} className="space-y-3"><h3 className="font-semibold">{data.voicemail_queue.items.find(c=>c.brand_id===brandId)?.customer_name}</h3>{data.voicemail_queue.items.filter(c=>c.brand_id===brandId).map(c=><div key={c.id} className="rounded-lg border p-3 space-y-2"><p className="font-semibold">{c.contact?`${c.contact.first_name} ${c.contact.last_name || ''}`:'Caller identity not yet confirmed'}</p><p className="text-sm">{c.destination || c.contact?.phone || 'Caller number unavailable'} · {new Date(c.created_date).toLocaleString()}</p>{c.contact?.email && <p className="text-sm">{c.contact.email}</p>}<p className="text-xs text-muted-foreground">{c.leadMatch==='caller_number'?'Matched existing contact. Confirm caller identity.':'Review caller identity before updating this inquiry.'}</p>{c.recordingStatus==='archived'?<CallRecordingAccess callId={c.id} autoLoad />:<p className="text-sm">Recording is being saved. Refresh this panel shortly.</p>}<Button size="sm" variant="outline" onClick={()=>{setQueueView(null);setSelectedLeadId(c.lead_id);}}>Open contact sheet</Button></div>)}</section>)}{!data.voicemail_queue?.count && <p>No voicemails are waiting.</p>}<Button size="sm" variant="outline" onClick={()=>load(false)}>Refresh voicemails</Button></div>:<div className="space-y-2">{(queueView==='new'?data.new_leads.items:queueView==='callbacks'?data.callback_queue.items:queueView==='followups'?data.follow_up_queue.items:data.assigned_brands).map(row=><button key={row.id} className="w-full rounded-lg border p-3 text-left hover:bg-accent" onClick={()=>{const id=row.lead_id || row.leadId || (queueView==='new'?row.id:null);if(id){setQueueView(null);setSelectedLeadId(id);}}}><strong>{queueView==='brands'?(row.display_name || row.name):queueView==='new'?`${row.first_name} ${row.last_name || ''}`:(row.title || row.task_type?.replace(/_/g,' ') || 'Follow-up')}</strong>{queueView!=='brands' && <p className="text-sm">{row.phone || row.notes || row.description || ''}</p>}</button>)}{(queueView==='new'?data.new_leads.items:queueView==='callbacks'?data.callback_queue.items:queueView==='followups'?data.follow_up_queue.items:data.assigned_brands).length===0 && <p>No items are waiting.</p>}</div>}</DialogContent></Dialog>
+      <Dialog open={Boolean(queueView)} onOpenChange={open=>{if(!open)setQueueView(null);}}><DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto"><DialogTitle>{({new:'New leads',callbacks:'Callbacks due',followups:'Follow-ups',brands:'Assigned brands',voicemails:'Voicemails by customer'})[queueView]}</DialogTitle>{queueView==='voicemails'?<div className="space-y-5">{[...new Set((data.voicemail_queue?.items || []).map(c=>c.brand_id))].map(brandId=><section key={brandId} className="space-y-3"><h3 className="font-semibold">{data.voicemail_queue.items.find(c=>c.brand_id===brandId)?.customer_name}</h3>{data.voicemail_queue.items.filter(c=>c.brand_id===brandId).map(c=><div key={c.id} className="rounded-lg border p-3 space-y-2"><p className="font-semibold">{!reviewed[itemKey('voicemails',c)] && <Badge className="mr-2">New</Badge>}{c.contact?`${c.contact.first_name} ${c.contact.last_name || ''}`:'Caller identity not yet confirmed'}</p><p className="text-sm">{c.destination || c.contact?.phone || 'Caller number unavailable'} · {new Date(c.created_date).toLocaleString()}</p><p className="text-sm font-semibold text-red-700">Waiting {waitingLabel(c)}</p>{c.contact?.email && <p className="text-sm">{c.contact.email}</p>}<p className="text-xs text-muted-foreground">{c.leadMatch==='caller_number'?'Matched existing contact. Confirm caller identity.':'Review caller identity before updating this inquiry.'}</p>{c.recordingStatus==='archived'?<CallRecordingAccess callId={c.id} autoLoad />:<p className="text-sm">Recording is being saved. Refresh this panel shortly.</p>}<Button size="sm" variant="outline" onClick={()=>{acknowledge('voicemails',c);setQueueView(null);setSelectedLeadId(c.lead_id);}}>Open contact sheet</Button></div>)}</section>)}{!data.voicemail_queue?.count && <p>No voicemails are waiting.</p>}<Button size="sm" variant="outline" onClick={()=>load(false)}>Refresh voicemails</Button></div>:<div className="space-y-2">{(queueView==='new'?data.new_leads.items:queueView==='callbacks'?data.callback_queue.items:queueView==='followups'?data.follow_up_queue.items:data.assigned_brands).map(row=><button key={row.id} className="w-full rounded-lg border p-3 text-left hover:bg-accent" onClick={()=>{const id=row.lead_id || row.leadId || (queueView==='new'?row.id:null);if(id){acknowledge(queueView,row);setQueueView(null);setSelectedLeadId(id);}}}><strong>{['callbacks','followups'].includes(queueView) && !reviewed[itemKey(queueView,row)] && <Badge className="mr-2">New</Badge>}{queueView==='brands'?(row.display_name || row.name):queueView==='new'?`${row.first_name} ${row.last_name || ''}`:(row.title || row.task_type?.replace(/_/g,' ') || 'Follow-up')}</strong>{queueView!=='brands' && <p className="text-sm">{row.phone || row.notes || row.description || ''}</p>}{['callbacks','followups'].includes(queueView) && <p className="text-xs font-semibold text-red-700">Waiting {waitingLabel(row)}</p>}</button>)}{(queueView==='new'?data.new_leads.items:queueView==='callbacks'?data.callback_queue.items:queueView==='followups'?data.follow_up_queue.items:data.assigned_brands).length===0 && <p>No items are waiting.</p>}</div>}</DialogContent></Dialog>
       <div className="grid gap-6 md:grid-cols-2">
         {/* Queue list */}
         <Card className="h-full">
@@ -109,7 +119,7 @@ export default function AgentWorkspace() {
         {data.reconnect_leads?.count > 0 && <Card className="h-full"><CardHeader><CardTitle className="text-base">Previously contacted · call again</CardTitle></CardHeader><CardContent className="space-y-2">{data.reconnect_leads.items.map(lead => <Button key={lead.id} variant="outline" className="w-full h-auto min-h-20 justify-start whitespace-normal text-left p-4" onClick={() => setSelectedLeadId(lead.id)}>{lead.first_name} {lead.last_name || ''} · {String(lead.lead_status || 'Follow up').replace(/_/g,' ')}</Button>)}</CardContent></Card>}
 
       </div>
-      <Dialog open={Boolean(selectedLeadId)} onOpenChange={open => {if (!open) {if (hasActivePhoneCall()) {toast({title:'End the active call before closing the lead.'});return;}setSelectedLeadId(null);window.history.replaceState(null,'', '/workspace');}}}><DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto"><DialogTitle>Lead record</DialogTitle>{selectedLeadId && <LeadDetail leadId={selectedLeadId} embedded onClose={()=>{if(hasActivePhoneCall()){toast({title:'End the active call before closing the lead.'});return;}setSelectedLeadId(null);window.history.replaceState(null,'','/workspace');}} onSaved={() => load(false)} />}</DialogContent></Dialog>
+      <Dialog open={Boolean(selectedLeadId)} onOpenChange={open => {if (!open) {if (hasActivePhoneCall()) {toast({title:'End the active call before closing the lead.'});return;}load(false);setSelectedLeadId(null);window.history.replaceState(null,'', '/workspace');}}}><DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto"><DialogTitle>Lead record</DialogTitle>{selectedLeadId && <LeadDetail leadId={selectedLeadId} embedded onClose={()=>{if(hasActivePhoneCall()){toast({title:'End the active call before closing the lead.'});return;}load(false);setSelectedLeadId(null);window.history.replaceState(null,'','/workspace');}} onSaved={() => load(false)} />}</DialogContent></Dialog>
     </div>
   );
 }
@@ -270,10 +280,10 @@ export function LeadContextPanel({ leadId, onSaved, callOnly = false, initialCon
 
 }
 
-function StatCard({ label, value, icon: Icon, accent, onClick }) {
+function StatCard({ label, value, icon: Icon, accent, onClick, newCount=0 }) {
   return (
     <button onClick={onClick} className="w-full text-left rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" aria-label={`Open ${label}`}><Card><CardContent className="p-4 flex items-center justify-between">
-      <div><p className="text-xs text-muted-foreground">{label}</p><p className="text-2xl font-heading font-semibold mt-1">{value}</p></div>
+      <div><p className="text-xs text-muted-foreground">{label} {newCount>0 && <Badge className="ml-1">{newCount} new</Badge>}</p><p className="text-2xl font-heading font-semibold mt-1">{value}</p></div>
       <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${accent}`}><Icon className="h-5 w-5" /></div>
     </CardContent></Card></button>
   );
