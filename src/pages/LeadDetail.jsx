@@ -1,3 +1,4 @@
+import FinancingDetails from '@/components/leads/FinancingDetails';
 import { computeQualificationStatus as computeQualStatus } from '@/lib/qualificationStatus';
 import CallRecordingAccess from '@/components/CallRecordingAccess';
 import AgentPhoneConnection from '@/components/AgentPhoneConnection';
@@ -312,6 +313,8 @@ export default function LeadDetail({leadId, embedded = false, onSaved}) {
           </CardContent>
         </Card>
       )}
+
+      {(lead.intakeStage === 'gms_qualification' || lead.attribution?.sourceSite === 'homes-around-north-houston') && <FinancingDetails key={lead.id} lead={lead} onSaved={loadAll} />}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Script */}
