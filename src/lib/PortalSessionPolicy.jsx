@@ -1,10 +1,10 @@
-import {hasActivePhoneCall} from '@/lib/telephony/browserClient';
+import {hasActivePhoneCall,isOnPhoneDuty} from '@/lib/telephony/browserClient';
 import {useEffect, useRef, useState} from 'react';
 const day = now => new Intl.DateTimeFormat('en-CA',{timeZone:'America/Chicago',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);
 export function usePortalSessionLimit(active, logout, name) {
  const exit=useRef(logout);exit.current=logout;
  useEffect(()=>{if(!active)return;const key=name+'-session-activity';let closing=false;let saved;try{saved=JSON.parse(localStorage.getItem(key));}catch{};saved ||= {at:Date.now(),day:day(new Date())};localStorage.setItem(key,JSON.stringify(saved));
- const check=()=>{if(closing)return false;let current;try{current=JSON.parse(localStorage.getItem(key));}catch{};current ||= saved;const expired=Date.now()-current.at>=3600000 || current.day!==day(new Date());if(expired){closing=true;localStorage.removeItem(key);Promise.resolve(exit.current()).catch(()=>{});return false;}return true;};
+ const check=()=>{if(closing)return false;if(isOnPhoneDuty()){saved={at:Date.now(),day:day(new Date())};localStorage.setItem(key,JSON.stringify(saved));return true;}let current;try{current=JSON.parse(localStorage.getItem(key));}catch{};current ||= saved;const expired=Date.now()-current.at>=3600000 || current.day!==day(new Date());if(expired){closing=true;localStorage.removeItem(key);Promise.resolve(exit.current()).catch(()=>{});return false;}return true;};
  const activity=()=>{if(!check())return;saved={at:Date.now(),day:saved.day};localStorage.setItem(key,JSON.stringify(saved));};
  const events=['pointerdown','keydown','touchstart'];events.forEach(e=>window.addEventListener(e,activity));window.addEventListener('focus',check);document.addEventListener('visibilitychange',check);const timer=setInterval(check,15000);check();return()=>{clearInterval(timer);events.forEach(e=>window.removeEventListener(e,activity));window.removeEventListener('focus',check);document.removeEventListener('visibilitychange',check);};},[active,name]);
 }

@@ -5,6 +5,9 @@ export function setInboundCall(value){inboundCall=value;window.dispatchEvent(new
 export function getInboundCall(leadId){return inboundCall?.leadId===leadId?inboundCall:null;}
 let activePhoneCall = false;
 let operatorMode = 'offline';
+let phoneCoverageAt=0;
+export function setPhoneCoverageReady(ready){phoneCoverageAt=ready?Date.now():0;}
+export function isOnPhoneDuty(){return Boolean(activeConnection && operatorMode!=='offline' && (hasActivePhoneCall() || operatorMode==='available' && Date.now()-phoneCoverageAt<45000));}
 export function canPlaceCall() { return Boolean(activeConnection) && ['available','after_call_work'].includes(operatorMode); }
 export function setOperatorMode(mode) { operatorMode=mode; }
 export function hasActivePhoneCall() { return activePhoneCall; }
