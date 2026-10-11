@@ -232,6 +232,8 @@ export default function LeadDetail({leadId, embedded = false, onSaved, onClose})
     }
   };
 
+  const latestVoicemail = calls.find(c=>c.recordingStatus==='archived' && (c.callKind==='voicemail' || c.direction==='inbound' && !c.agentUid));
+
   if (loading) {
     return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" /></div>;
   }
@@ -267,11 +269,11 @@ export default function LeadDetail({leadId, embedded = false, onSaved, onClose})
         </CardContent>
       </Card>
 
-      <Card><CardHeader><CardTitle className="text-base">Voicemail &amp; Call Recordings</CardTitle></CardHeader><CardContent className="space-y-4">
-        <Button size="sm" variant="outline" onClick={loadAll}>Refresh recordings</Button>
-        {calls.filter(c=>c.recordingStatus==='archived').length===0 && <p className="text-sm text-muted-foreground">No archived recordings are available for this lead yet.</p>}
-        {calls.filter(c=>c.recordingStatus==='archived').map(c=><div key={c.id} className="rounded-lg border p-3 space-y-2"><p className="text-sm font-semibold">{c.callKind==='voicemail' || c.direction==='inbound' && !c.agentUid?'Voicemail':'Call recording'} · {callDate(c.call_start || c.created_date || c.createdAt)}</p><CallRecordingAccess callId={c.id} autoLoad /></div>)}
-      </CardContent></Card>
+      {latestVoicemail && <Card><CardContent className="p-4 flex flex-wrap items-center justify-between gap-3">
+        <div><h3 className="text-sm font-semibold">Latest voicemail</h3><p className="text-xs text-muted-foreground">{callDate(latestVoicemail.call_start || latestVoicemail.created_date || latestVoicemail.createdAt)}</p></div>
+        <CallRecordingAccess key={latestVoicemail.id} callId={latestVoicemail.id} autoLoad compact />
+        <Button size="sm" variant="outline" onClick={()=>{const section=document.getElementById('lead-call-history');section?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});section?.focus({preventScroll:true});}}>View All</Button>
+      </CardContent></Card>}
 
       <Card className="border-primary/30">
         <CardHeader className="pb-3">
@@ -399,8 +401,8 @@ export default function LeadDetail({leadId, embedded = false, onSaved, onClose})
 
       {/* History */}
       <div className="grid gap-6 lg:grid-cols-3">
-        <Card>
-          <CardHeader><CardTitle className="text-sm">Call History</CardTitle></CardHeader>
+        <Card id="lead-call-history" tabIndex={-1} className="scroll-mt-24">
+          <CardHeader><CardTitle className="text-sm">Call History &amp; Recordings</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
             {calls.length === 0 ? <p className="text-muted-foreground">No calls yet.</p> :
               calls.map(c => <details key={c.id} className="border border-border rounded p-2"><summary className="cursor-pointer"><Badge variant="outline">{String(c.disposition || c.status || 'Call').replace(/_/g,' ')}</Badge> <span className="text-xs text-muted-foreground">{callDate(c.call_start || c.created_date || c.createdAt)}</span></summary><div className="mt-2 text-sm space-y-1"><p>{c.notes || 'No notes recorded.'}</p><p>Duration: {c.duration_seconds ?? 'Not available'} seconds</p><p>Call reference: {c.id}</p><p>{c.direction==='inbound'?'Inbound call':'Outbound / logged call'}</p><CallRecordingAccess callId={c.id} /></div></details>)}
