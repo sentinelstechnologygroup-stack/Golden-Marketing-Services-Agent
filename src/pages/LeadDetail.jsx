@@ -1,3 +1,4 @@
+import { computeQualificationStatus as computeQualStatus } from '@/lib/qualificationStatus';
 import AgentPhoneConnection from '@/components/AgentPhoneConnection';
 import { LeadContextPanel } from '@/pages/AgentWorkspace';
 import QualField from '@/components/leads/QualificationField';
@@ -433,14 +434,5 @@ function mapDispositionToStatus(d) {
   return map[d] || 'contact_attempted';
 }
 
-function computeQualStatus(form, answers) {
-  if (!form || !form.questions) return 'pending';
-  const required = form.questions.filter(q => q.required);
-  const allAnswered = required.every(q => answers[q.id]);
-  if (!allAnswered) return 'in_progress';
-  let score = 0;
-  form.questions.forEach(q => { if (answers[q.id] === 'yes') score += (q.score_weight || 0); });
-  return score >= (form.qualification_threshold || 0) ? 'qualified' : 'unqualified';
-}
 
 function callDate(value) { const milliseconds=value?.seconds ? value.seconds*1000 : value?._seconds ? value._seconds*1000 : value;const date=value?.toDate ? value.toDate() : new Date(milliseconds);return Number.isNaN(date.getTime()) ? 'Time unavailable' : date.toLocaleString();}
