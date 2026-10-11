@@ -145,6 +145,8 @@ export function LeadContextPanel({ leadId, onSaved, callOnly = false, initialCon
     try {
       const c = initialContext || await api.getLead(user, leadId);
       setCtx(c);
+      const activeId=c.lead.activeCallId || c.lead.active_call_id;
+      if(activeId){const active=await api.telephonyAction(user,'call_status',{callId:activeId});setCall({...active,callId:activeId});}
       setQualAnswers(c.lead.qualification_data || {});
       setDisposition(c.lead.disposition || 'attempted');
     } catch (e) { setError(e); } finally { setLoading(false); }
@@ -231,7 +233,7 @@ export function LeadContextPanel({ leadId, onSaved, callOnly = false, initialCon
 
   return (<Card className={telephony?.mode === 'production' ? 'border-emerald-300' : telephony?.mode === 'unavailable' ? 'border-rose-300 bg-rose-50' : 'border-amber-300'}>
         <CardContent className="space-y-2 p-2">
-          {call?.direction==='inbound' && <p className="text-sm">Thank you for calling {brand?.name || 'our office'}. This is {user?.full_name || 'your representative'}. How may I help you?</p>}
+          {call?.direction==='inbound' && <p className="text-sm">Thank you for calling {call?.brandName || brand?.display_name || brand?.name || 'the client'}. This is {call?.agentName || user?.displayName || user?.display_name || user?.full_name || user?.name || 'your representative'}. How may I help you?</p>}
 
           {!call && telephony?.mode === 'production' && recordingPolicy === 'record_on_consent' && (
             <label className="flex items-start gap-2 rounded-md border border-border p-3 text-sm">
@@ -250,7 +252,7 @@ export function LeadContextPanel({ leadId, onSaved, callOnly = false, initialCon
               </Button>
               <Button size="sm" variant="destructive" disabled={controlBusy || callEnded} onClick={() => control(endCall)}><PhoneOff className="h-3.5 w-3.5 mr-1" />End call</Button>
               <Button size="sm" variant="outline" disabled={controlBusy || callEnded || !call.conferenceReady || !['in_progress','on_hold'].includes(call.status) || !(telephony?.warmTransferEnabled || call?.direction==='inbound') || ['starting','consulting','completed','completion_requested'].includes(transferStatus)} onClick={() => transfer('start_consultation')}><ArrowRightLeft className="h-3.5 w-3.5 mr-1" />Consult customer</Button>
-              {transferStatus === 'consulting' && <><Button size="sm" disabled={controlBusy} onClick={() => transfer('complete_transfer')}>Complete handoff</Button><Button size="sm" variant="outline" disabled={controlBusy} onClick={() => transfer('skip_consultation')}>Try next recipient</Button><Button size="sm" variant="outline" disabled={controlBusy} onClick={() => transfer('cancel_transfer')}>Cancel handoff</Button></>}
+              {transferStatus === 'consulting' && <>{!call?.consultationJoined && <p role="status" className="text-xs">Calling the recipient. Complete handoff becomes available after they answer and join.</p>}<Button size="sm" disabled={controlBusy || call?.consultationStatus!=='answered' || !call?.consultationJoined} onClick={() => transfer('complete_transfer')}>Complete handoff</Button><Button size="sm" variant="outline" disabled={controlBusy} onClick={() => transfer('skip_consultation')}>Try next recipient</Button><Button size="sm" variant="outline" disabled={controlBusy} onClick={() => transfer('cancel_transfer')}>Cancel handoff</Button></>}
               {callEnded && <Button size="sm" onClick={() => {setCall(null);setControlError(null);setTransferStatus(null);}}>New call</Button>}
               {transferStatus==='exhausted' && <p className="text-xs">No available recipient answered. The lead is back with you; arrange a callback.</p>}{call?.handoffRecipientName && <span className="text-xs">Recipient: {call.handoffRecipientName}</span>}{transferStatus && <Badge variant="outline">{transferStatus.replace(/_/g, ' ')}</Badge>}
             </div>

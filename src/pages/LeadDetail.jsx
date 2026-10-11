@@ -250,8 +250,8 @@ export default function LeadDetail({leadId, embedded = false, onSaved}) {
       {/* Pre-call context banner */}
       {!embedded && <AgentPhoneConnection user={user} />}
       <Card className="border-l-4 border-l-primary">
-        <CardContent className="p-4 space-y-1 relative pr-4 md:pr-56">
-          <div className="md:absolute md:right-4 md:top-4 md:w-48"><LeadContextPanel key={id} leadId={id} callOnly initialContext={{lead,brand,campaign,script,form:qualForm,calls,duplicates:[],lead_age_minutes:0}} /></div>
+        <CardContent className="p-4 space-y-1 grid gap-3 md:grid-cols-[minmax(0,1fr)_16rem]">
+          <div className="md:col-start-2 md:row-start-1 md:row-span-5"><LeadContextPanel key={id} leadId={id} callOnly initialContext={{lead,brand,campaign,script,form:qualForm,calls,duplicates:[],lead_age_minutes:0}} /></div>
           <div className="flex items-center gap-2 flex-wrap">
             <Badge className="bg-primary text-primary-foreground border-0">{brand?.display_name || 'Unknown brand'}</Badge>
             <Badge variant="outline">{campaign?.name || 'No campaign'}</Badge>

@@ -1,4 +1,4 @@
-import { prepareRingback } from './ringback';
+import { prepareRingback, setRingback } from './ringback';
 let activeConnection = null;
 let inboundCall=null;
 export function setInboundCall(value){inboundCall=value;window.dispatchEvent(new CustomEvent('gms-inbound-accepted',{detail:value}));}
@@ -33,6 +33,7 @@ export async function createBrowserClient(session, {onIncoming, onState, onError
       if (notification.type !== 'callUpdate') return;
       const call = notification.call;
       activePhoneCall = ['ringing','answering','active','held','recovering'].includes(call.state);
+      if(['active','held','hangup','destroy','purge'].includes(call.state))setRingback(false);
       updates.get(call.id)?.(call);
       if (call.state === 'ringing' && call.direction === 'inbound' && isOutboundSetup(call) && Date.now() < outboundSetupUntil) {
         if (!answered.has(call.id)) { answered.add(call.id); Promise.resolve(call.answer()).then(() => {onIncoming(null);onState('active');audio?.play().catch(() => onError(new Error('Audio playback blocked.')));}).catch(onError); }
