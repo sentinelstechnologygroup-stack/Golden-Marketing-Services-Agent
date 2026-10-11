@@ -4,6 +4,7 @@ import { getAuth, sendPasswordResetEmail, signInWithEmailAndPassword, signOut } 
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { normalizeEntityRow, normalizeEntityWrite } from './firebaseEntityContract';
+import { selectActiveAssignment } from './assignmentSelection.mjs';
 
 const env = (name) => import.meta.env?.[name] || '';
 // Public Firebase web configuration for the existing production backend.
@@ -53,12 +54,12 @@ const agentRoles = new Set(['super_admin', 'supervisor', 'lead_response_agent', 
 const ACTIVE_TENANT_KEY = 'gms-agent-active-tenant';
 const getTenantId = () => profile?.organization_id || null;
 
-function selectAssignment(assignments) {
-  const activeAssignments = (assignments || []).filter((item) => item.status === 'active' && item.tenantStatus !== 'disabled');
-  const storedTenantId = window.localStorage.getItem(ACTIVE_TENANT_KEY);
-  const selected = activeAssignments.find((item) => item.tenantId === storedTenantId) || activeAssignments[0] || null;
+function selectAssignment(assignments, uid) {
+  const initializationKey = `gms-agent-workspace-default-v1:${uid}`;
+  const { activeAssignments, selected } = selectActiveAssignment(assignments, window.localStorage.getItem(ACTIVE_TENANT_KEY), window.localStorage.getItem(initializationKey) === 'true');
   if (selected?.tenantId) {
     window.localStorage.setItem(ACTIVE_TENANT_KEY, selected.tenantId);
+    window.localStorage.setItem(initializationKey, 'true');
   }
   return { activeAssignments, selected };
 }
@@ -93,7 +94,7 @@ async function getProfile() {
     return profile;
   }
   const token = await auth.currentUser?.getIdTokenResult();
-  const { activeAssignments, selected } = selectAssignment(raw.agentAssignments);
+  const { activeAssignments, selected } = selectAssignment(raw.agentAssignments, raw.uid);
   const assignmentRole = roleMap[selected?.role] || selected?.role;
   const claimedRole = raw.gmsSuperAdmin ? 'super_admin' : roleMap[token?.claims?.role] || token?.claims?.role || assignmentRole;
   if (!agentRoles.has(claimedRole)) {
