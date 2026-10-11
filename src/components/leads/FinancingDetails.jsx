@@ -17,7 +17,7 @@ export default function FinancingDetails({ lead, onSaved }) {
   async function save() {
     setBusy(true); setError('');
     try {
-      await firebaseClient.entities.Lead.update(lead.id, { financingProfile: { ...financingDetails(answers), recordedAt: new Date().toISOString() } });
+      await firebaseClient.functions.invoke('saveLeadSupplementalPreferences', { leadId: lead.id, financing: financingDetails(answers) });
       onSaved?.();
     } catch (failure) { setError(failure.message || 'Could not save financing information.'); }
     finally { setBusy(false); }
@@ -25,7 +25,7 @@ export default function FinancingDetails({ lead, onSaved }) {
   async function saveEmailPreference() {
     setBusy(true); setError('');
     try {
-      await firebaseClient.entities.Lead.update(lead.id, { communicationPreferences: { weeklyListingEmails: { presented: true, requested: !emailSuppressed && weeklyEmail, expectedRevision: savedEmail?.revision || 0 } } });
+      await firebaseClient.functions.invoke('saveLeadSupplementalPreferences', { leadId: lead.id, weeklyEmail: { presented: true, requested: !emailSuppressed && weeklyEmail, expectedRevision: savedEmail?.revision || 0 } });
       onSaved?.();
     } catch (failure) { setError(failure.message || 'Could not save email preference.'); }
     finally { setBusy(false); }
