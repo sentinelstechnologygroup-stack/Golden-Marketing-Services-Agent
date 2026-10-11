@@ -1,5 +1,8 @@
 import { prepareRingback } from './ringback';
 let activeConnection = null;
+let inboundCall=null;
+export function setInboundCall(value){inboundCall=value;window.dispatchEvent(new CustomEvent('gms-inbound-accepted',{detail:value}));}
+export function getInboundCall(leadId){return inboundCall?.leadId===leadId?inboundCall:null;}
 let activePhoneCall = false;
 let operatorMode = 'offline';
 export function canPlaceCall() { return Boolean(activeConnection) && ['available','after_call_work'].includes(operatorMode); }
@@ -59,7 +62,7 @@ export async function createBrowserClient(session, {onIncoming, onState, onError
 function isOutboundSetup(call) {
   try {
     const state = JSON.parse(atob(call.options?.clientState || ''));
-    if (state.gmsCallId) return state.legRole === 'agent';
+    if (state.gmsCallId) return ['agent','inbound_agent'].includes(state.legRole);
   } catch { /* Some SDK notifications omit client state. */ }
   return Date.now() < outboundSetupUntil;
 }

@@ -1,4 +1,5 @@
 import { computeQualificationStatus as computeQualStatus } from '@/lib/qualificationStatus';
+import CallRecordingAccess from '@/components/CallRecordingAccess';
 import AgentPhoneConnection from '@/components/AgentPhoneConnection';
 import { LeadContextPanel } from '@/pages/AgentWorkspace';
 import QualField from '@/components/leads/QualificationField';
@@ -395,7 +396,7 @@ export default function LeadDetail({leadId, embedded = false, onSaved}) {
           <CardHeader><CardTitle className="text-sm">Call History</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
             {calls.length === 0 ? <p className="text-muted-foreground">No calls yet.</p> :
-              calls.map(c => <details key={c.id} className="border border-border rounded p-2"><summary className="cursor-pointer"><Badge variant="outline">{String(c.disposition || c.status || 'Call').replace(/_/g,' ')}</Badge> <span className="text-xs text-muted-foreground">{callDate(c.call_start || c.created_date || c.createdAt)}</span></summary><div className="mt-2 text-sm space-y-1"><p>{c.notes || 'No notes recorded.'}</p><p>Duration: {c.duration_seconds ?? 'Not available'} seconds</p><p>Call reference: {c.id}</p></div></details>)}
+              calls.map(c => <details key={c.id} className="border border-border rounded p-2"><summary className="cursor-pointer"><Badge variant="outline">{String(c.disposition || c.status || 'Call').replace(/_/g,' ')}</Badge> <span className="text-xs text-muted-foreground">{callDate(c.call_start || c.created_date || c.createdAt)}</span></summary><div className="mt-2 text-sm space-y-1"><p>{c.notes || 'No notes recorded.'}</p><p>Duration: {c.duration_seconds ?? 'Not available'} seconds</p><p>Call reference: {c.id}</p><p>{c.direction==='inbound'?'Inbound call':'Outbound / logged call'}</p><CallRecordingAccess callId={c.id} /></div></details>)}
           </CardContent>
         </Card>
         <Card>

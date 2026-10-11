@@ -385,6 +385,10 @@ export const api = {
   getNotificationPreferences: (user) => guard(async () => ({ tenant: tenant(user), preferences: { channels: ['in_app', 'email'], min_priority: 3 } })),
   postNotificationPreferences: (user, prefs) => guard(async () => ({ tenant: tenant(user), saved: prefs })),
 
+  inboundAction: (user, action, params = {}) => guard(async () => {
+    const response = await firebaseClient.functions.invoke('inboundCommunications', {action, ...params});
+    return response?.data || response;
+  }),
   // Provider-independent call controls; credentials remain on the server.
   telephonyAction: (user, action, params = {}) => guard(async () => {
     const response = await firebaseClient.functions.invoke('communications', {action, params});
