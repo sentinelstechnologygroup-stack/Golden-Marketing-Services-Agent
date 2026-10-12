@@ -51,14 +51,15 @@ export default function Home() {
   const [leads, setLeads] = useState([]);
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [clientFilter,setClientFilter] = useState('all');
 
   useEffect(() => {
     (async () => {
       try {
-        const filter = buildTenantFilter(user);
+        const filter = buildTenantFilter(user, clientFilter==='all'?{}:{organization_id:clientFilter});
         const [leadData, brandData] = await Promise.all([
           firebaseClient.entities.Lead.filter(filter, '-created_date', 200),
-          firebaseClient.entities.Brand.filter(buildTenantFilter(user), '-created_date', 50),
+          firebaseClient.entities.Brand.filter(filter, '-created_date', 50),
         ]);
         setLeads(leadData);
         setBrands(brandData);
@@ -68,7 +69,7 @@ export default function Home() {
         setLoading(false);
       }
     })();
-  }, [user]);
+  }, [user,clientFilter]);
 
   const brandMap = useMemo(() => Object.fromEntries(brands.map(brand => [brand.id, brand])), [brands]);
 
@@ -132,6 +133,7 @@ export default function Home() {
         </Link>
       </div>
 
+      <label className="block text-sm">Dashboard client filter<select aria-label="Dashboard client filter" className="ml-3 rounded-lg border p-2" value={clientFilter} onChange={event=>setClientFilter(event.target.value)}><option value="all">{user?.gmsSuperAdmin?'All clients':'All assigned clients'}</option>{user?.tenantOptions?.map(client=><option key={client.tenantId} value={client.tenantId}>{client.name}</option>)}</select></label>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard icon={Inbox} label="Leads received" value={metrics.total} detail={`${metrics.newLeads} currently new`} />
         <MetricCard icon={AlertCircle} label="Unworked leads" value={metrics.unworked} detail="Requires immediate response" gold />

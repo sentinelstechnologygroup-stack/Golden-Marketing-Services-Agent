@@ -62,7 +62,6 @@ export default function Layout() {
   const role = user?.role || 'lead_response_agent';
   const roleLabel = ROLE_LABELS[role] || role;
   const isPreviewAccess = false;
-  const tenantOptions = user?.tenantOptions || [];
 
   const canSee = (item) => {
     if (role === 'ai_admin' && !['/','/campaigns','/leads','/brands','/scripts','/qualification-forms','/lead-sources','/routing-rules','/phone-numbers'].includes(item.path)) return false;
@@ -78,13 +77,6 @@ export default function Layout() {
     navigate('/login');
   };
 
-  const handleTenantChange = async (event) => {
-    const tenantId = event.target.value;
-    if (!tenantId || tenantId === user?.organization_id) return;
-    await firebaseClient.auth.switchTenant(tenantId);
-    setMobileOpen(false);
-    window.location.assign('/');
-  };
   const toggleNotifications = async () => {
     setNotificationsOpen(open => !open);
     if (notificationsOpen) return;
@@ -136,17 +128,6 @@ export default function Layout() {
         <Link to="/workspace" onClick={() => setMobileOpen(false)} className="flex w-full items-center gap-3 rounded-xl border border-[#C9A24B]/25 bg-[#C9A24B]/10 px-4 py-3 text-xs font-bold text-[#ead486] transition hover:bg-[#C9A24B]/15">
           <Sparkles className="h-4 w-4" /> Open agent workspace
         </Link>
-      </div>
-      <div className="px-4 pb-4">
-        <label htmlFor={mobile ? 'active-tenant-mobile' : 'active-tenant'} className="mb-1.5 block text-[9px] font-bold uppercase tracking-[.2em] text-white/45">Active client</label>
-        <select
-          id={mobile ? 'active-tenant-mobile' : 'active-tenant'}
-          value={user?.organization_id || ''}
-          onChange={handleTenantChange}
-          className="w-full rounded-lg border border-white/15 bg-white/10 px-3 py-2.5 text-xs font-semibold text-white outline-none focus:border-[#C9A24B]"
-        >
-          {tenantOptions.map((tenant) => <option key={tenant.tenantId} value={tenant.tenantId} className="bg-[#001922] text-white">{tenant.name}</option>)}
-        </select>
       </div>
       <Navigation />
       <div className="shrink-0 border-t border-white/[.08] p-3">

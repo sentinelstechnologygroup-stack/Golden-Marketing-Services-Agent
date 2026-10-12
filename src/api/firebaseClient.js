@@ -4,7 +4,7 @@ import { getAuth, sendPasswordResetEmail, signInWithEmailAndPassword, signOut } 
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { normalizeEntityRow, normalizeEntityWrite } from './firebaseEntityContract';
-import { selectActiveAssignment } from './assignmentSelection.mjs';
+import { scopedId, splitId, scopeValue, requestContext } from './workspaceScope.mjs';
 
 const env = (name) => import.meta.env?.[name] || '';
 // Public Firebase web configuration for the existing production backend.
@@ -51,30 +51,25 @@ const ENTITY_COLLECTIONS = {
 };
 const roleMap = { admin: 'super_admin', gms_super_admin: 'super_admin', supervisor: 'supervisor', agent: 'lead_response_agent', ai_admin: 'ai_admin', auditor: 'auditor' };
 const agentRoles = new Set(['super_admin', 'supervisor', 'lead_response_agent', 'ai_admin', 'auditor']);
-const ACTIVE_TENANT_KEY = 'gms-agent-active-tenant';
-const getTenantId = () => profile?.organization_id || null;
+const getTenantId = () => profile?.phone_tenant_id || null;
 
-function selectAssignment(assignments, uid) {
-  const initializationKey = `gms-agent-workspace-default-v1:${uid}`;
-  const { activeAssignments, selected } = selectActiveAssignment(assignments, window.localStorage.getItem(ACTIVE_TENANT_KEY), window.localStorage.getItem(initializationKey) === 'true');
-  if (selected?.tenantId) {
-    window.localStorage.setItem(ACTIVE_TENANT_KEY, selected.tenantId);
-    window.localStorage.setItem(initializationKey, 'true');
-  }
-  return { activeAssignments, selected };
+function selectAssignment(assignments) {
+  const activeAssignments = (assignments || []).filter(item => item.status === 'active' && !['disabled','archived'].includes(item.tenantStatus));
+  const selected = activeAssignments.find(item => item.phoneEnabled) || activeAssignments[0] || null;
+  return {activeAssignments, selected};
 }
 
 function applyAssignment(raw, claimedRole, assignments, selected) {
-  const assignedBrandIds = Array.isArray(selected?.brandIds) && selected.brandIds.length
-    ? selected.brandIds
-    : selected?.brandId ? [selected.brandId] : [];
+  const assignedBrandIds = assignments.flatMap(a => (a.brandIds?.length ? a.brandIds : a.brandId ? [a.brandId] : []).map(id => scopedId(a.tenantId,id)));
   return {
     ...raw,
     id: raw.uid,
     role: claimedRole,
-    organization_id: selected?.tenantId || null,
-    tenantId: selected?.tenantId || null,
-    tenant_name: selected?.tenantName || selected?.tenantId || null,
+    organization_id: null,
+    tenantId: null,
+    tenant_name: raw.gmsSuperAdmin ? 'All clients' : 'All assigned clients',
+    phone_tenant_id: selected?.phoneEnabled ? selected.tenantId : null,
+    phoneAssignments: assignments.filter(a => a.phoneEnabled),
     assigned_brand_ids: assignedBrandIds,
     agentAssignments: assignments,
     tenantOptions: assignments.map((item) => ({
@@ -93,10 +88,9 @@ async function getProfile() {
     profile = { ...raw, id: raw.uid, role: 'password_change_required', agentAssignments: [], tenantOptions: [] };
     return profile;
   }
-  const token = await auth.currentUser?.getIdTokenResult();
-  const { activeAssignments, selected } = selectAssignment(raw.agentAssignments, raw.uid);
+  const { activeAssignments, selected } = selectAssignment(raw.agentAssignments);
   const assignmentRole = roleMap[selected?.role] || selected?.role;
-  const claimedRole = raw.gmsSuperAdmin ? 'super_admin' : roleMap[token?.claims?.role] || token?.claims?.role || assignmentRole;
+  const claimedRole = raw.gmsSuperAdmin ? 'super_admin' : roleMap[raw.role] || raw.role || assignmentRole;
   if (!agentRoles.has(claimedRole)) {
     throw Object.assign(new Error('This account is not authorized for the Agent CRM.'), { status: 403 });
   }
@@ -110,13 +104,25 @@ async function getProfile() {
 async function entityRows(entityName, filter = {}, sort = '', pageSize = 200) {
   const collectionName = ENTITY_COLLECTIONS[entityName];
   if (!collectionName) return [];
-  if (collectionName === 'members') return (await httpsCallable(functions, 'getGmsAgentTeam')({ tenantId: getTenantId() })).data.rows || [];
-  const result = await httpsCallable(functions, 'getAgentCollection')({ tenantId: getTenantId(), collectionName, limit: pageSize });
-  let rows = (result.data?.rows || []).map((row) => normalizeEntityRow(collectionName, row));
-  rows = rows.filter((row) => Object.entries(filter || {}).every(([key, expected]) => expected && typeof expected === 'object' && '$in' in expected ? expected.$in.includes(row[key]) : expected == null || row[key] === expected));
+  const assignments = profile?.agentAssignments || [];
+  const permitted = assignments.filter(a => profile?.gmsSuperAdmin || !['invoices','documents','organizations','auditLogs'].includes(collectionName) || ['admin','client_admin','client_supervisor'].includes(a.role));
+  const groups = await Promise.all(permitted.map(async a => {
+    const result = collectionName === 'members'
+      ? await httpsCallable(functions,'getGmsAgentTeam')({tenantId:a.tenantId})
+      : await httpsCallable(functions,'getAgentCollection')({tenantId:a.tenantId,collectionName,limit:pageSize});
+    return (result.data?.rows || []).map(row => scopeValue(normalizeEntityRow(collectionName,{...row,tenantId:a.tenantId,client_name:a.tenantName}),a.tenantId));
+  }));
+  let rows = groups.flat().filter(row => Object.entries(filter || {}).every(([key, expected]) => expected && typeof expected === 'object' && '$in' in expected ? expected.$in.includes(row[key]) : expected == null || row[key] === expected));
   const field = String(sort || '').replace(/^-/, '');
-  if (field) rows.sort((a, b) => String(a[field] || '').localeCompare(String(b[field] || '')) * (String(sort).startsWith('-') ? -1 : 1));
-  return rows.slice(0, pageSize);
+  if (field) rows.sort((a,b)=>String(a[field] || '').localeCompare(String(b[field] || ''))*(String(sort).startsWith('-')?-1:1));
+  return rows.slice(0,pageSize);
+}
+async function invokeScoped(name, value = {}) {
+  if(['getGmsStaff','updateGmsStaff','sendGmsSetupEmail','getAiLeadControl','setAiLeadPause','getGmsCallCenterReport','revokeAllSessions'].includes(name))return (await httpsCallable(functions,name)(value)).data;
+  const fallback = ['communications','inboundCommunications','getAgentCollection'].includes(name) ? getTenantId() : profile?.agentAssignments?.length === 1 ? profile.agentAssignments[0].tenantId : null;
+  const {tenantId,data} = requestContext(value,fallback);
+  const result = (await httpsCallable(functions,name)({...data,tenantId})).data;
+  return scopeValue(result,tenantId);
 }
 
 function entityApi(entityName) {
@@ -124,15 +130,16 @@ function entityApi(entityName) {
   return {
     list: (limit) => entityRows(entityName, {}, '', limit || 200),
     filter: (filter, sort, limit) => entityRows(entityName, filter, sort, limit || 200),
-    get: async (id) => (await entityRows(entityName, {}, '', 500)).find((row) => row.id === id) || null,
-    create: async (data) => {
-      const normalizedData = normalizeEntityWrite(collectionName, data);
-      const response = collectionName === 'appointments'
-        ? await httpsCallable(functions, 'appointmentWorkflow')({ tenantId: getTenantId(), action: 'create', data: normalizedData })
-        : await httpsCallable(functions, 'createAgentRecord')({ tenantId: getTenantId(), collectionName, data: normalizedData });
-      return normalizeEntityRow(collectionName, response.data);
+    get: async id => { const scope=splitId(id);const result=await invokeScoped('getAgentCollection',{...(scope?{tenantId:scope.tenantId}:{}),collectionName,recordId:id,limit:500});return (result.rows || []).map(row=>normalizeEntityRow(collectionName,row)).find(row=>row.id===id || splitId(row.id)?.id===id) || null; },
+    create: async data => {
+      const normalizedData=normalizeEntityWrite(collectionName,data);
+      const response=await invokeScoped(collectionName==='appointments'?'appointmentWorkflow':'createAgentRecord',{
+        ...(collectionName==='appointments'?{action:'create'}:{collectionName}),data:normalizedData,
+        ...(data.tenantId || data.organization_id ? {tenantId:data.tenantId || data.organization_id}: {})
+      });
+      return normalizeEntityRow(collectionName,response);
     },
-    update: async (id, data) => normalizeEntityRow(collectionName, (await httpsCallable(functions, 'updateAgentRecord')({ tenantId: getTenantId(), collectionName, recordId: id, data: normalizeEntityWrite(collectionName, data) })).data),
+    update: async (id,data) => normalizeEntityRow(collectionName,await invokeScoped('updateAgentRecord',{collectionName,recordId:id,data:normalizeEntityWrite(collectionName,data)})),
     delete: async () => { throw new Error('CRM deletion requires an approved server workflow.'); },
   };
 }
@@ -161,13 +168,6 @@ export const firebaseClient = {
       if (auth.currentUser) return getProfile();
       throw Object.assign(new Error('Authentication required'), { status: 401 });
     },
-    switchTenant: async (tenantId) => {
-      const assignment = profile?.agentAssignments?.find((item) => item.tenantId === tenantId && item.status === 'active');
-      if (!assignment) throw Object.assign(new Error('This tenant is not assigned to your Agent CRM account.'), { status: 403 });
-      window.localStorage.setItem(ACTIVE_TENANT_KEY, tenantId);
-      profile = applyAssignment(profile, profile.role, profile.agentAssignments, assignment);
-      return profile;
-    },
     logout: async () => { profile = null; await signOut(auth); },
     redirectToLogin: () => { window.location.assign('/login'); },
     resetPasswordRequest: async (email) => sendPasswordResetEmail(auth, email.trim(), { url: 'https://agentcrm.goldenmarketingservices.com/login', handleCodeInApp: false }),
@@ -178,6 +178,6 @@ export const firebaseClient = {
     loginWithProvider: async () => { throw new Error('Use the approved CRM sign-in method.'); },
   },
   entities: new Proxy({}, { get: (_target, entityName) => entityApi(entityName) }),
-  functions: { invoke: async (name, data) => (await httpsCallable(functions, name)({ ...data, tenantId: getTenantId() })).data },
+  functions: { invoke: invokeScoped },
 };
 

@@ -389,8 +389,15 @@ export const api = {
   postNotificationPreferences: (user, prefs) => guard(async () => ({ tenant: tenant(user), saved: prefs })),
 
   inboundAction: (user, action, params = {}) => guard(async () => {
-    const response = await firebaseClient.functions.invoke('inboundCommunications', {action, ...params});
-    return response?.data || response;
+    const targets=(user?.phoneAssignments || []).filter(a=>a.inboundPhoneEnabled);
+    if(['list','presence','browser_session'].includes(action)) {
+      if(!targets.length)throw new Error('No assigned client has inbound phone service configured.');
+      const responses=await Promise.all(targets.map(a=>firebaseClient.functions.invoke('inboundCommunications',{action,...params,tenantId:a.tenantId})));
+      if(action==='list')return {calls:responses.flatMap(r=>r.calls || [])};
+      if(action==='browser_session')return {sessions:responses};
+      return responses[0];
+    }
+    return firebaseClient.functions.invoke('inboundCommunications',{action,...params});
   }),
   // Provider-independent call controls; credentials remain on the server.
   telephonyAction: (user, action, params = {}) => guard(async () => {
