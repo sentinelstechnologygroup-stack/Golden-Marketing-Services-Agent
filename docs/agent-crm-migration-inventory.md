@@ -168,3 +168,7 @@ connection verification and resource views. The backend creates single-use
 state tied to the saved client/location and fresh GMS administrator. OAuth
 credentials remain in GMS Secret Manager. This frontend increment is not yet
 deployed or accepted end to end; production calling remains disabled.
+
+## All authorized client workspace (October 11, 2026)
+
+The global active-client selector is removed. Super admins load all active GMS clients using fresh server authority; staff load active client/brand/campaign assignments maintained in Agents & roles. Workspace, leads, callbacks, follow-ups and voicemails aggregate those authorized scopes. Dashboard filtering is local and defaults to all authorized clients. Record references retain tenant identity for reads, updates, recordings and call controls. Phone connections are established only for explicitly provisioned, eligible assigned clients, independent of dashboard filtering. Shared inbound acceptance reserves one call per agent across clients; existing calling gates and recording rules remain.
