@@ -32,14 +32,15 @@ async function guard(fn) {
 
 function permittedBrandIds(user) {
   if (!user) return [];
-  if (user.role === 'admin' || user.role === 'super_admin') return null; // null = all brands in org
+  if (['super_admin', 'gms_super_admin'].includes(user.role)) return null; // unrestricted GMS operator
+  if (user.role === 'admin') return user.assigned_brand_ids || [];
   return user.assigned_brand_ids || [];
 }
 
 export function getTenantContext(user) {
   const brands = permittedBrandIds(user);
   return {
-    organization_id: user?.organization_id || null,
+    organization_id: ['super_admin', 'gms_super_admin'].includes(user?.role) ? null : (user?.organization_id || null),
     brand_ids: brands === null ? 'all' : brands,
     role: user?.role || 'unknown',
     user_id: user?.id || null
@@ -52,7 +53,7 @@ function tenant(user) {
 
 function scopeByOrg(user, extra = {}) {
   const f = { ...extra };
-  if (user?.organization_id) f.organization_id = user.organization_id;
+  if (user?.organization_id && !['super_admin', 'gms_super_admin'].includes(user?.role)) f.organization_id = user.organization_id;
   return f;
 }
 
