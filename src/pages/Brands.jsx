@@ -25,11 +25,8 @@ export default function Brands() {
 
   const load = async () => {
     try {
-      const [b, o] = await Promise.all([
-        firebaseClient.entities.Brand.filter(buildTenantFilter(user), '-created_date', 100),
-        firebaseClient.entities.Organization.list(50),
-      ]);
-      setBrands(b); setOrgs(o);
+      const b = await firebaseClient.entities.Brand.filter(buildTenantFilter(user), '-created_date', 100);
+      setBrands(b); setOrgs((user?.tenantOptions || []).map(client=>({id:client.tenantId,display_name:client.name})));
     } catch (e) { console.error(e); } finally { setLoading(false); }
   };
   useEffect(() => { load(); }, [user]);
@@ -119,7 +116,7 @@ function BrandDialog({ brand, orgs, onClose, onSaved }) {
       <DialogHeader><DialogTitle>{brand ? 'Edit Brand' : 'New Brand'}</DialogTitle></DialogHeader>
       <form onSubmit={submit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <div><Label>Organization *</Label><select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={form.organization_id} onChange={e => setForm({...form, organization_id: e.target.value})}>{orgs.map(o => <option key={o.id} value={o.id}>{o.display_name}</option>)}</select></div>
+          <div><Label>Client *</Label><select disabled={Boolean(brand)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={form.organization_id} onChange={e => setForm({...form, organization_id: e.target.value})}>{orgs.map(o => <option key={o.id} value={o.id}>{o.display_name}</option>)}</select></div>
           <div><Label>Status</Label><select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={form.status} onChange={e => setForm({...form, status: e.target.value})}><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
         </div>
         <div className="grid grid-cols-2 gap-4">
