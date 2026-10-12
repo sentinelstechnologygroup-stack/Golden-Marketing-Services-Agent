@@ -9,7 +9,8 @@ import { firebaseClient } from '@/api/firebaseClient';
 
 export const ROLE_LABELS = {
   admin: 'Administrator',
-  super_admin: 'Administrator',
+  super_admin: 'Super Administrator',
+  gms_super_admin: 'Super Administrator',
   org_admin: 'Administrator',
   brand_admin: 'Administrator',
   supervisor: 'Supervisor',
@@ -24,6 +25,7 @@ export const ROLE_LABELS = {
 export const ROLE_HIERARCHY = {
   admin: 100,
   super_admin: 100,
+  gms_super_admin: 100,
   org_admin: 100,
   brand_admin: 100,
   supervisor: 70,
@@ -36,7 +38,7 @@ export const ROLE_HIERARCHY = {
 };
 
 export function isAdminRole(role) {
-  return ['admin', 'super_admin', 'org_admin', 'brand_admin'].includes(role);
+  return ['admin', 'super_admin', 'gms_super_admin', 'org_admin', 'brand_admin'].includes(role);
 }
 
 export function canManageScripts(role) {
@@ -57,7 +59,7 @@ export function canViewAuditLog(role) {
  */
 export function getPermittedBrandIds(user) {
   if (!user) return [];
-  if (user.role === 'super_admin') return null; // null = no filter
+  if (['super_admin', 'gms_super_admin'].includes(user.role)) return null; // null = unrestricted GMS operations
   if (user.assigned_brand_ids && user.assigned_brand_ids.length) {
     return user.assigned_brand_ids;
   }
@@ -71,7 +73,7 @@ export function getPermittedBrandIds(user) {
 export function buildTenantFilter(user, extra = {}) {
   const filter = { ...extra };
   if (!user) return filter;
-  if (user.role === 'super_admin') return filter;
+  if (['super_admin', 'gms_super_admin'].includes(user.role)) return filter;
   if (user.organization_id) {
     filter.organization_id = user.organization_id;
   }
