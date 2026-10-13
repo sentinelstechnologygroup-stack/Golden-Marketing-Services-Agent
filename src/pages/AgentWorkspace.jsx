@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import CommunicationsQueue from '@/components/CommunicationsQueue';
 import AgentPhoneConnection from '@/components/AgentPhoneConnection';
 import { placeBrowserCall } from '@/lib/telephony/browserClient';
 import { EmptyDataTable } from '@/components/CollectionStructure';
@@ -63,6 +64,7 @@ export default function AgentWorkspace() {
       </div>
 
       <AgentPhoneConnection user={user} />
+      <CommunicationsQueue user={user} />
 
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <StatCard label="New Leads" value={data.new_leads.count} icon={AlertCircle} accent="bg-blue-50 text-blue-600" />
@@ -168,8 +170,8 @@ function LeadContextPanel({ leadId, onSaved }) {
     if (!ctx?.lead?.phone) return;
     setCallLoading(true);
     try {
-      await api.telephonyAction(user, 'claim_lead', {leadId});
-      const result = await api.postCall(user, { lead_id: leadId, to: ctx.lead.phone, recording_consent: recordingConsent });
+      await api.telephonyAction(user, 'claim_lead', {leadId, tenantId: ctx.lead.tenantId || ctx.lead.organization_id});
+      const result = await api.postCall(user, { lead_id: leadId, tenantId: ctx.lead.tenantId || ctx.lead.organization_id, to: ctx.lead.phone, recording_consent: recordingConsent });
       if (result.dial) {
         const browserCall = placeBrowserCall({...result.dial, onUpdate: update => {
           setCall(value => value ? {...value, browserState:update.state} : value);

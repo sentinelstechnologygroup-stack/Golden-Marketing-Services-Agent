@@ -154,3 +154,14 @@ only for the portal origin. Existing historical call records and demo layouts
 are preserved. Recording, signed status events, call controls and tenant/campaign
 number selection retain their existing gated workflow. Calling and warm transfer
 remain disabled pending account provisioning and live media acceptance.
+
+### Multi-client operational adapter (2026-10-13, draft)
+
+Preserved Agent Workspace, settings, entity contracts, lead controls and existing
+routes. Added a client-labeled communications queue and Users & Permissions panel.
+Phone registration now uses a user-scoped backend identity with separate availability.
+Incoming calls must obtain verified server context before answering. Callback
+creation uses a server-authorized lead/line workflow. Entity reads aggregate current
+server assignments; ambiguous record IDs fail explicitly. Shared Firebase IDs and
+permanent demo fixtures remain unchanged. Live parity is pending the multi-client
+acceptance gates; do not merge or deploy this draft without coordinated backend review.
