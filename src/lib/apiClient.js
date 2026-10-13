@@ -25,7 +25,8 @@ async function guard(fn) {
   try {
     return await fn();
   } catch (e) {
-    const status = e?.status || (e?.response?.status) || 500;
+    const code = String(e?.code || '').replace('functions/', '');
+    const status = e?.status || e?.response?.status || ({ unauthenticated: 401, 'permission-denied': 403, 'invalid-argument': 400, 'not-found': 404, unavailable: 503, 'deadline-exceeded': 504 }[code]) || 500;
     throw new ApiError(e?.message || 'Request failed', status);
   }
 }
@@ -33,8 +34,7 @@ async function guard(fn) {
 function permittedBrandIds(user) {
   if (!user) return [];
   if (['super_admin', 'gms_super_admin'].includes(user.role)) return null; // unrestricted GMS operator
-  if (user.role === 'admin') return user.assigned_brand_ids || [];
-  return user.assigned_brand_ids || [];
+  return [...new Set((user.agentAssignments || []).flatMap(item => item.brandIds || (item.brandId ? [item.brandId] : [])))];
 }
 
 export function getTenantContext(user) {
@@ -51,18 +51,9 @@ function tenant(user) {
   return getTenantContext(user);
 }
 
-function scopeByOrg(user, extra = {}) {
-  const f = { ...extra };
-  if (user?.organization_id && !['super_admin', 'gms_super_admin'].includes(user?.role)) f.organization_id = user.organization_id;
-  return f;
-}
+function scopeByOrg(_user, extra = {}) { return { ...extra }; }
 
-function applyBrandScope(user, items) {
-  const brands = permittedBrandIds(user);
-  if (brands === null) return items;
-  if (!brands.length) return [];
-  return items.filter(i => brands.includes(i.brand_id));
-}
+function applyBrandScope(_user, items) { return items; }
 
 function listResponse(user, items) {
   return { count: items.length, tenant: tenant(user), items };
@@ -106,11 +97,7 @@ export const api = {
     return listResponse(user, items);
   }),
 
-  getCallbackQueue: (user) => guard(async () => {
-    const items = applyBrandScope(user, await firebaseClient.entities.FollowUpTask.filter(
-      { ...scopeByOrg(user), task_type: 'callback_reminder', status: 'pending' }, 'due_date', 100));
-    return listResponse(user, items);
-  }),
+  getCallbackQueue: (user) => guard(async () => ({ ...(await firebaseClient.clients.invoke('getCommunicationsQueue', { kind: 'callbacks' })), tenant: tenant(user) })),
 
   getFollowUpQueue: (user) => guard(async () => {
     const items = applyBrandScope(user, await firebaseClient.entities.FollowUpTask.filter(
@@ -349,14 +336,8 @@ export const api = {
   patchFollowUp: (user, id, payload) => guard(async () => firebaseClient.entities.FollowUpTask.update(id, payload)),
 
   // ---------- 9. Callbacks ----------
-  getCallbacks: (user) => guard(async () => {
-    const items = applyBrandScope(user, await firebaseClient.entities.FollowUpTask.filter(
-      { ...scopeByOrg(user), task_type: 'callback_reminder' }, 'due_date', 200));
-    return listResponse(user, items);
-  }),
-  postCallback: (user, payload) => guard(async () => firebaseClient.entities.FollowUpTask.create({
-    ...payload, task_type: 'callback_reminder', status: 'pending'
-  })),
+  getCallbacks: (user) => guard(async () => ({ ...(await firebaseClient.clients.invoke('getCommunicationsQueue', { kind: 'callbacks' })), tenant: tenant(user) })),
+  postCallback: (user, payload) => guard(() => firebaseClient.functions.invoke('createCommunicationCallback', { tenantId: payload.tenantId || payload.organization_id, leadId: payload.leadId || payload.lead_id, dueAt: payload.dueAt || payload.due_date, note: payload.note || '' })),
 
   // ---------- 10. Appointments ----------
   getAppointments: (user) => guard(async () => {
@@ -384,6 +365,13 @@ export const api = {
   getNotificationPreferences: (user) => guard(async () => ({ tenant: tenant(user), preferences: { channels: ['in_app', 'email'], min_priority: 3 } })),
   postNotificationPreferences: (user, prefs) => guard(async () => ({ tenant: tenant(user), saved: prefs })),
 
+  getCommunicationsQueue: (_user, options = {}) => guard(() => firebaseClient.clients.invoke('getCommunicationsQueue', options)),
+  updateCommunicationsQueue: (_user, data) => guard(() => firebaseClient.clients.invoke('updateCommunicationsQueue', data)),
+  getCommunicationMedia: (_user, data) => guard(() => firebaseClient.clients.invoke('getCommunicationMedia', data)),
+  getIncomingCallContext: (_user, providerCallId) => guard(() => firebaseClient.clients.invoke('getIncomingCallContext', { providerCallId })),
+  createCommunicationCallback: (_user, data) => guard(() => firebaseClient.clients.invoke('createCommunicationCallback', data)),
+  getOperationalPermissions: () => guard(() => firebaseClient.clients.invoke('getOperationalPermissions')),
+  setOperationalGrant: (data) => guard(() => firebaseClient.clients.invoke('setOperationalGrant', data)),
   // Provider-independent call controls; credentials remain on the server.
   telephonyAction: (user, action, params = {}) => guard(async () => {
     const response = await firebaseClient.functions.invoke('communications', {action, params});
@@ -394,9 +382,9 @@ export const api = {
     const response = await firebaseClient.functions.invoke('communications', { action: 'health_check' });
     return response?.data || response;
   }),
-  postCall: (user, { lead_id, to, recording_consent = false }) => guard(async () => {
+  postCall: (user, { lead_id, tenantId, to, recording_consent = false }) => guard(async () => {
     const response = await firebaseClient.functions.invoke('communications', {
-      action: 'start_call',
+      action: 'start_call', tenantId,
       params: { leadId: lead_id, to, recordingConsent: recording_consent === true }
     });
     return response?.data || response;

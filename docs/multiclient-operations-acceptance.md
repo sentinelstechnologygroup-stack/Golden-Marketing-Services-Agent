@@ -41,3 +41,27 @@ Status: **IN PROGRESS — NOT PRODUCTION APPROVED**.
 
 ## Current repository limitations
 The agent frontend delegates `browser_session`, `set_availability`, and other call controls to the deployed Firebase `communications` function, whose implementation is not in this repository. Frontend changes do not establish server-side enforcement. Locate and modify deployed function, IAM/security rules, recording retrieval and DID routing *before* considering this complete.
+
+## Paired implementation (2026-10-13)
+
+The Agent branch now calls the Customer backend's user-scoped phone session,
+verified incoming context, unified communications queues and centralized grants.
+`Connect calling` registers the phone while offline; `Make me available` is a
+separate choice. Availability heartbeats expire after 60 seconds. Switching an
+optional client context does not disconnect the user's phone. Queue reads refresh
+and reauthorize rather than treating errors as empty results.
+
+The Customer backend PR must be reviewed and deployed **with calling disabled**
+before these frontend APIs are used. The shared Firebase identifiers and tenant
+paths are unchanged. Calling credentials migrate explicitly to server-only
+`telephonyIdentities/{uid}`; no selected-assignment fallback is used. Operational
+grants must include verified line IDs and capabilities. Legacy grants are not
+silently upgraded to phone privileges.
+
+Automated emulator tests are implementation evidence, not live acceptance.
+Still required: approved deployment SHA; provisioned unique user credentials;
+verified Telnyx restrictions and token-revocation behavior; actual two-client DID
+ringing, audio, greeting and call labels; playback origins and recording policy;
+permission-change/browser cache checks; demo segregation and rollback evidence.
+Keep this PR draft and do not merge or enable production calling until these
+requirements pass and deployment is explicitly approved.

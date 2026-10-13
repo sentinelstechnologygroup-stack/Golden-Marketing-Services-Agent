@@ -48,10 +48,17 @@ const ENTITY_COLLECTIONS = {
   Report: 'reports', AuditLog: 'auditLogs', User: 'members',
   Notification: 'notifications',
 };
-const roleMap = { admin: 'super_admin', gms_super_admin: 'super_admin', supervisor: 'supervisor', agent: 'lead_response_agent', auditor: 'auditor' };
-const agentRoles = new Set(['super_admin', 'supervisor', 'lead_response_agent', 'auditor']);
+const roleMap = { admin: 'admin', gms_super_admin: 'super_admin', supervisor: 'supervisor', agent: 'lead_response_agent', auditor: 'auditor' };
+const agentRoles = new Set(['super_admin', 'admin', 'supervisor', 'lead_response_agent', 'auditor']);
 const ACTIVE_TENANT_KEY = 'gms-agent-active-tenant';
 const getTenantId = () => profile?.organization_id || null;
+const recordClients = new Map();
+function recordTenant(id, explicit) {
+  if (explicit) return explicit;
+  const clients = recordClients.get(id);
+  if (clients?.size > 1) throw Object.assign(new Error('Choose the client identified on this record.'), { status: 400 });
+  return clients?.values().next().value || getTenantId();
+}
 
 function selectAssignment(assignments) {
   const activeAssignments = (assignments || []).filter((item) => item.status === 'active' && item.tenantStatus !== 'disabled');
@@ -95,11 +102,11 @@ async function getProfile() {
   const token = await auth.currentUser?.getIdTokenResult();
   const { activeAssignments, selected } = selectAssignment(raw.agentAssignments);
   const assignmentRole = roleMap[selected?.role] || selected?.role;
-  const claimedRole = raw.gmsSuperAdmin ? 'super_admin' : roleMap[token?.claims?.role] || token?.claims?.role || assignmentRole;
+  const claimedRole = raw.gmsSuperAdmin ? 'super_admin' : assignmentRole || (['agent','supervisor','admin','auditor'].includes(token?.claims?.role) ? roleMap[token.claims.role] : null);
   if (!agentRoles.has(claimedRole)) {
     throw Object.assign(new Error('This account is not authorized for the Agent CRM.'), { status: 403 });
   }
-  if (!selected) {
+  if (!selected && !raw.gmsSuperAdmin) {
     throw Object.assign(new Error('This Agent CRM account does not have an active tenant assignment.'), { status: 403 });
   }
   profile = applyAssignment(raw, claimedRole, activeAssignments, selected);
@@ -109,7 +116,11 @@ async function getProfile() {
 async function entityRows(entityName, filter = {}, sort = '', pageSize = 200) {
   const collectionName = ENTITY_COLLECTIONS[entityName];
   if (!collectionName || collectionName === 'members') return [];
-  const result = await httpsCallable(functions, 'getAgentCollection')({ tenantId: getTenantId(), collectionName, limit: pageSize });
+  const result = await httpsCallable(functions, 'getAgentCollection')({ collectionName, limit: pageSize });
+  for (const row of result.data?.rows || []) {
+    if (!recordClients.has(row.id)) recordClients.set(row.id, new Set());
+    if (row.tenantId) recordClients.get(row.id).add(row.tenantId);
+  }
   let rows = (result.data?.rows || []).map((row) => normalizeEntityRow(collectionName, row));
   rows = rows.filter((row) => Object.entries(filter || {}).every(([key, expected]) => expected && typeof expected === 'object' && '$in' in expected ? expected.$in.includes(row[key]) : expected == null || row[key] === expected));
   const field = String(sort || '').replace(/^-/, '');
@@ -122,7 +133,11 @@ function entityApi(entityName) {
   return {
     list: (limit) => entityRows(entityName, {}, '', limit || 200),
     filter: (filter, sort, limit) => entityRows(entityName, filter, sort, limit || 200),
-    get: async (id) => (await entityRows(entityName, {}, '', 500)).find((row) => row.id === id) || null,
+    get: async (id) => {
+      const matches = (await entityRows(entityName, {}, '', 500)).filter(row => row.id === id);
+      if (matches.length > 1) throw Object.assign(new Error('This record ID exists in multiple clients. Open the client-labeled record.'), {status:400});
+      return matches[0] || null;
+    },
     create: async (data) => {
       const normalizedData = normalizeEntityWrite(collectionName, data);
       const response = collectionName === 'appointments'
@@ -130,7 +145,7 @@ function entityApi(entityName) {
         : await httpsCallable(functions, 'createAgentRecord')({ tenantId: getTenantId(), collectionName, data: normalizedData });
       return normalizeEntityRow(collectionName, response.data);
     },
-    update: async (id, data) => normalizeEntityRow(collectionName, (await httpsCallable(functions, 'updateAgentRecord')({ tenantId: getTenantId(), collectionName, recordId: id, data: normalizeEntityWrite(collectionName, data) })).data),
+    update: async (id, data) => normalizeEntityRow(collectionName, (await httpsCallable(functions, 'updateAgentRecord')({ tenantId: recordTenant(id, data?.tenantId || data?.organization_id), collectionName, recordId: id, data: normalizeEntityWrite(collectionName, data) })).data),
     delete: async () => { throw new Error('CRM deletion requires an approved server workflow.'); },
   };
 }
@@ -166,7 +181,7 @@ export const firebaseClient = {
       profile = applyAssignment(profile, profile.role, profile.agentAssignments, assignment);
       return profile;
     },
-    logout: async () => { profile = null; await signOut(auth); },
+    logout: async () => { profile = null; recordClients.clear(); await signOut(auth); },
     redirectToLogin: () => { window.location.assign('/login'); },
     resetPasswordRequest: async (email) => sendPasswordResetEmail(auth, email.trim()),
     resetPassword: async () => { throw new Error('Use the Firebase password-reset link.'); },
@@ -176,6 +191,15 @@ export const firebaseClient = {
     loginWithProvider: async () => { throw new Error('Use the approved CRM sign-in method.'); },
   },
   entities: new Proxy({}, { get: (_target, entityName) => entityApi(entityName) }),
-  functions: { invoke: async (name, data) => (await httpsCallable(functions, name)({ ...data, tenantId: getTenantId() })).data },
+  functions: { invoke: async (name, data = {}) => {
+    const globalCommunications = ['browser_session', 'set_availability', 'health_check'].includes(data.action);
+    const tenantId = name === 'communications' && globalCommunications ? undefined
+      : recordTenant(data.params?.callId || data.params?.leadId || data.leadId || data.appointmentId, data.tenantId || data.params?.tenantId);
+    const payload = { ...data };
+    if (tenantId) payload.tenantId = tenantId; else delete payload.tenantId;
+    const result = await httpsCallable(functions, name)(payload);
+    if (result.data?.callId && tenantId) recordClients.set(result.data.callId, new Set([tenantId]));
+    return result.data;
+  } },
 };
 

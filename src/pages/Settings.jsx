@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api, ApiError } from '@/lib/apiClient';
 import { useAuth } from '@/lib/AuthContext';
+import OperationalPermissions from '@/components/OperationalPermissions';
 import GoHighLevelConnection from '@/components/GoHighLevelConnection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +13,7 @@ export default function Settings() {
   const { user } = useAuth();
   return <div className="space-y-6">
     {user?.gmsSuperAdmin === true && <GoHighLevelConnection tenantId="gms-internal" locationId="5BAXXiLlxJSiM5tspPQy" internal />}
+    {user?.gmsSuperAdmin === true && <OperationalPermissions />}
     <TelephonySettings />
   </div>;
 }
