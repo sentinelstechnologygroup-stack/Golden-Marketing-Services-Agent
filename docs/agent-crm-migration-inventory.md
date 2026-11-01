@@ -154,3 +154,6 @@ only for the portal origin. Existing historical call records and demo layouts
 are preserved. Recording, signed status events, call controls and tenant/campaign
 number selection retain their existing gated workflow. Calling and warm transfer
 remain disabled pending account provisioning and live media acceptance.
+
+## SMS verification (2026-11-01 draft)
+Lead detail displays server-owned smsVerification and the last 50 smsMessages from the existing lead response. Existing manual verification, layouts and fixtures remain. The Customer backend owns sending and callbacks; no frontend provider credentials or send path. Internal-test-only; no live parity or delivery claim.
